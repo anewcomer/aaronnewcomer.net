@@ -20,6 +20,7 @@ $(function() {
             $.ajax({
                 url: "https://formspree.io/f/mjkgqayq",
                 type: "POST",
+                dataType: "json",
                 data: {
                     name: name,
                     phone: phone,
@@ -40,7 +41,8 @@ $(function() {
                     //clear all fields
                     $('#contactForm').trigger("reset");
                 },
-                error: function() {
+                error: function(a, b, c) {
+                    alert(JSON.stringify({ a, b, c}));
                     // Fail message
                     $('#success').html("<div class='alert alert-danger'>");
                     $('#success > .alert-danger').html("<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;")
