@@ -172,8 +172,7 @@
 
         let selectedPiece = null; // Stores { piece, row, col } of the selected piece
         let currentPlayer = 'red'; // 'red' or 'black'
-        let mandatoryJumpExists = false;
-        let gameOver = false;
+        let gameOver = false; // mandatoryJumpExists is no longer needed
 
         function renderBoard() {
             checkersboard.innerHTML = '';
@@ -226,11 +225,8 @@
             if (gameOver) {
                 return;
             }
-            if (mandatoryJumpExists) {
-                statusDisplay.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} to move - MANDATORY JUMP!`;
-            } else {
-                statusDisplay.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} to move`;
-            }
+            // Status no longer mentions mandatory jump
+            statusDisplay.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} to move`;
         }
 
         function handleSquareClick(event) {
@@ -303,26 +299,16 @@
             clearHighlights(); // Clear all existing highlights first
             highlightSelectedPiece(startRow, startCol); // Re-highlight selected piece
 
-            mandatoryJumpExists = checkMandatoryJumpsForPlayer(currentPlayer).length > 0;
-
-            if (mandatoryJumpExists && !canPieceJump(startRow, startCol)) {
-                // If there's a mandatory jump for the player, but this piece can't do it,
-                // then this piece cannot be selected for a non-jump move.
-                // We'll still highlight the selected piece, but no target squares.
-                return;
-            }
+            // No check for mandatoryJumpExists here anymore, as it's not enforced
 
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
                     const moveResult = isValidMove(startRow, startCol, r, c);
                     if (moveResult.valid) {
-                        // Only highlight if it's a valid move (jump or non-jump)
-                        // and if there's a mandatory jump, ensure this is a jump move.
-                        if (!mandatoryJumpExists || moveResult.jump) {
-                            const square = document.querySelector(`.square[data-row="${r}"][data-col="${c}"]`);
-                            if (square) {
-                                square.classList.add('highlight-move');
-                            }
+                        // Always highlight valid moves, regardless of jumps
+                        const square = document.querySelector(`.square[data-row="${r}"][data-col="${c}"]`);
+                        if (square) {
+                            square.classList.add('highlight-move');
                         }
                     }
                 }
@@ -367,8 +353,7 @@
             const absRowDiff = Math.abs(rowDiff);
             const absColDiff = Math.abs(colDiff);
 
-            const possibleJumpsForPlayer = checkMandatoryJumpsForPlayer(currentPlayer);
-            mandatoryJumpExists = possibleJumpsForPlayer.length > 0;
+            // mandatoryJumpExists is no longer used here
 
             // Determine direction based on piece color/king status
             let validDirections = [];
@@ -393,9 +378,7 @@
                 if (targetPiece) { // Cannot move to a square with a piece without jumping
                     return { valid: false };
                 }
-                if (mandatoryJumpExists) { // If a jump is available, normal moves are not allowed
-                    return { valid: false };
-                }
+                // Removed mandatory jump check here
                 if (!isKing(piece) && !isForwardMove) { // Regular pieces cannot move backward
                     return { valid: false };
                 }
@@ -418,56 +401,16 @@
                     return { valid: false };
                 }
 
-                // If a mandatory jump exists for the *current player*, this specific move must be one of those jumps.
-                // We're checking if *this piece* can jump, which is handled by the canPieceJump function.
+                // Removed mandatory jump check for the current player
                 return { valid: true, jump: true, jumpedRow: jumpedRow, jumpedCol: jumpedCol };
             }
 
             return { valid: false };
         }
 
-        // Checks if a specific piece can perform a jump
-        function canPieceJump(row, col) {
-            const piece = board[row][col];
-            if (!piece) return false;
-
-            const directions = isKing(piece) ? [-1, 1] : (isRed(piece) ? [-1] : [1]);
-
-            for (const rDir of directions) {
-                for (const cDir of [-1, 1]) {
-                    const jumpedRow = row + rDir;
-                    const jumpedCol = col + cDir;
-                    const targetRow = row + 2 * rDir;
-                    const targetCol = col + 2 * cDir;
-
-                    if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8) {
-                        const jumpedPiece = board[jumpedRow]?.[jumpedCol]; // Optional chaining for safety
-                        const targetSquareEmpty = !board[targetRow][targetCol];
-
-                        if (jumpedPiece && getPieceColor(piece) !== getPieceColor(jumpedPiece) && targetSquareEmpty) {
-                            return true; // Found a valid jump
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        // Checks if any mandatory jumps exist for the current player
-        function checkMandatoryJumpsForPlayer(playerColor) {
-            const jumps = [];
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    const piece = board[r][c];
-                    if (piece && getPieceColor(piece) === playerColor) {
-                        if (canPieceJump(r, c)) {
-                            jumps.push({ row: r, col: c });
-                        }
-                    }
-                }
-            }
-            return jumps;
-        }
+        // The canPieceJump and checkMandatoryJumpsForPlayer functions are no longer directly used for enforcing jumps,
+        // but can be kept if future features might require checking for *possible* jumps.
+        // For this specific request, they are effectively bypassed by the changes in isValidMove and highlightPossibleMoves.
 
         function checkWinCondition() {
             let redPieces = 0;
@@ -509,7 +452,7 @@
             ];
             selectedPiece = null;
             currentPlayer = 'red';
-            mandatoryJumpExists = false;
+            // mandatoryJumpExists = false; // No longer needed
             gameOver = false;
             statusDisplay.classList.remove('winner-message');
             renderBoard();
