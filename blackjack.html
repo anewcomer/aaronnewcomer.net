@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Trainer</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #282c34;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #1a1e24;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #61dafb;
+            margin-bottom: 25px;
+            font-size: 2.5em;
+        }
+
+        .game-area {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .player-area, .dealer-area {
+            background-color: #3a3f4a;
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            min-height: 200px;
+            position: relative;
+        }
+
+        h2 {
+            color: #a8a8a8;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            min-height: 80px; /* Ensure space for cards */
+        }
+
+        .card {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 70px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .card.hidden {
+            background-color: #888;
+            color: #888;
+            border: 1px solid #555;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="70" height="100" viewBox="0 0 70 100"><rect x="0" y="0" width="70" height="100" fill="%23888"/><line x1="0" y1="0" x2="70" y2="100" stroke="%23555" stroke-width="2"/><line x1="70" y1="0" x2="0" y2="100" stroke="%23555" stroke-width="2"/><circle cx="35" cy="50" r="15" fill="%23666"/></svg>');
+            background-size: cover;
+        }
+
+        .card .rank {
+            font-size: 1.5em;
+            line-height: 1;
+        }
+
+        .card .suit {
+            font-size: 1em;
+            line-height: 1;
+        }
+
+        .card.red {
+            color: red;
+        }
+
+        .score {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #61dafb;
+        }
+
+        .actions {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .action-button {
+            background-color: #61dafb;
+            color: #282c34;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-button:hover:not(:disabled) {
+            background-color: #21a1f1;
+            transform: translateY(-2px);
+        }
+
+        .action-button:disabled {
+            background-color: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .new-game-button {
+            background-color: #4CAF50;
+        }
+
+        .new-game-button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1.4em;
+            font-weight: bold;
+            min-height: 30px;
+            color: #fdd835; /* Yellowish for info */
+        }
+
+        .message.error {
+            color: #ef5350; /* Red for errors/mistakes */
+        }
+
+        .hint-message {
+            margin-top: 15px;
+            font-size: 1.2em;
+            color: #90CAF9; /* Light blue for hints */
+        }
+
+        /* Basic Strategy Table Overlay (Optional, for reference) */
+        .bs-table {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-size: 0.9em;
+            text-align: left;
+            z-index: 100;
+            max-height: 80%;
+            overflow-y: auto;
+            display: none; /* Hidden by default */
+        }
+
+        .bs-table h3 {
+            margin-top: 0;
+            color: #61dafb;
+            text-align: center;
+        }
+
+        .bs-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bs-table th, .bs-table td {
+            border: 1px solid #444;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .bs-table th {
+            background-color: #333;
+            color: #61dafb;
+        }
+
+        .bs-table tr:nth-child(even) {
+            background-color: #222;
+        }
+
+        .bs-table .bs-action {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Blackjack Trainer</h1>
+
+        <div class="game-area">
+            <div class="dealer-area">
+                <h2>Dealer's Hand</h2>
+                <div id="dealer-cards" class="cards"></div>
+                <div id="dealer-score" class="score"></div>
+            </div>
+
+            <div class="player-area">
+                <h2>Your Hand</h2>
+                <div id="player-cards" class="cards"></div>
+                <div id="player-score" class="score"></div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="hit-button" class="action-button">Hit</button>
+            <button id="stand-button" class="action-button">Stand</button>
+            <button id="double-button" class="action-button">Double Down</button>
+            <button id="split-button" class="action-button">Split</button>
+            <button id="surrender-button" class="action-button">Surrender</button>
+            <button id="hint-button" class="action-button new-game-button">View Hint</button>
+            <button id="new-game-button" class="action-button new-game-button">New Game</button>
+        </div>
+
+        <div id="message" class="message">Click "New Game" to start.</div>
+        <div id="hint-message" class="hint-message"></div>
+
+        <div id="bs-table-overlay" class="bs-table">
+            <h3>Basic Strategy Reference (H17, DAS)</h3>
+            <p>S: Stand, H: Hit, D: Double Down, P: Split, R: Surrender</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Your Hand</th>
+                        <th colspan="10">Dealer's Upcard</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><b>Hard 21</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Hard 20</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Hard 19</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Hard 18</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Hard 17</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Hard 16</b></td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>R/H</td><td>R/H</td><td>R/H</td></tr>
+                    <tr><td><b>Hard 15</b></td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>R/H</td><td>R/H</td></tr>
+                    <tr><td><b>Hard 14</b></td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Hard 13</b></td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Hard 12</b></td><td>H</td><td>H</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Hard 11</b></td><td colspan="10" class="bs-action">D</td></tr>
+                    <tr><td><b>Hard 10</b></td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Hard 9</b></td><td>H</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Hard 8</b></td><td colspan="10" class="bs-action">H</td></tr>
+                    <tr><td><b>Hard 7-5</b></td><td colspan="10" class="bs-action">H</td></tr>
+
+                    <tr><td><b>Soft 21</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Soft 20</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Soft 19 (A,8)</b></td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td></tr>
+                    <tr><td><b>Soft 18 (A,7)</b></td><td>S</td><td>D/S</td><td>D/S</td><td>D/S</td><td>D/S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Soft 17 (A,6)</b></td><td>H</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Soft 16 (A,5)</b></td><td>H</td><td>H</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Soft 15 (A,4)</b></td><td>H</td><td>H</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Soft 14 (A,3)</b></td><td>H</td><td>H</td><td>H</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Soft 13 (A,2)</b></td><td>H</td><td>H</td><td>H</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+
+                    <tr><td><b>Pair A,A</b></td><td colspan="10" class="bs-action">P</td></tr>
+                    <tr><td><b>Pair 10,10</b></td><td colspan="10" class="bs-action">S</td></tr>
+                    <tr><td><b>Pair 9,9</b></td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>S</td><td>P</td><td>P</td><td>S</td><td>S</td></tr>
+                    <tr><td><b>Pair 8,8</b></td><td colspan="10" class="bs-action">P</td></tr>
+                    <tr><td><b>Pair 7,7</b></td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Pair 6,6</b></td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Pair 5,5</b></td><td colspan="10" class="bs-action">D</td></tr>
+                    <tr><td><b>Pair 4,4</b></td><td>H</td><td>H</td><td>H</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Pair 3,3</b></td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                    <tr><td><b>Pair 2,2</b></td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- Game State Variables ---
+        let deck = [];
+        let playerHands = []; // Can be multiple hands due to splitting
+        let currentHandIndex = 0;
+        let dealerHand = [];
+        let gameActive = false;
+        let canSurrender = false; // Only allowed on first two cards
+        let isDoubleDown = false; // Track if current hand is a doubled hand
+
+        // --- DOM Elements ---
+        const dealerCardsDiv = document.getElementById('dealer-cards');
+        const dealerScoreDiv = document.getElementById('dealer-score');
+        const playerCardsDiv = document.getElementById('player-cards');
+        const playerScoreDiv = document.getElementById('player-score');
+        const messageDiv = document.getElementById('message');
+        const hintMessageDiv = document.getElementById('hint-message');
+
+        const hitButton = document.getElementById('hit-button');
+        const standButton = document.getElementById('stand-button');
+        const doubleButton = document.getElementById('double-button');
+        const splitButton = document.getElementById('split-button');
+        const surrenderButton = document.getElementById('surrender-button');
+        const hintButton = document.getElementById('hint-button');
+        const newGameButton = document.getElementById('new-game-button');
+
+        // --- Card Data ---
+        const suits = ['♠', '♥', '♦', '♣'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const values = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+            'J': 10, 'Q': 10, 'K': 10, 'A': 11
+        };
+
+        // --- Core Game Functions ---
+
+        function createDeck() {
+            deck = [];
+            for (let i = 0; i < 6; i++) { // 6 decks
+                for (const suit of suits) {
+                    for (const rank of ranks) {
+                        deck.push({ rank, suit, value: values[rank] });
+                    }
+                }
+            }
+            shuffleDeck();
+        }
+
+        function shuffleDeck() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function dealCard() {
+            if (deck.length === 0) {
+                // Reshuffle if deck runs out (in a real casino, they'd use a new shoe)
+                createDeck();
+                messageDiv.textContent = "Shuffling a new shoe!";
+            }
+            return deck.pop();
+        }
+
+        function calculateHandValue(hand) {
+            let value = 0;
+            let numAces = 0;
+            for (const card of hand) {
+                value += card.value;
+                if (card.rank === 'A') {
+                    numAces++;
+                }
+            }
+            while (value > 21 && numAces > 0) {
+                value -= 10;
+                numAces--;
+            }
+            return value;
+        }
+
+        function getHandScoreText(hand) {
+            const value = calculateHandValue(hand);
+            const isSoft = hand.some(card => card.rank === 'A' && calculateHandValue(hand.filter(c => c !== card)) + 11 === value);
+            let text = `${value}`;
+            if (isSoft && value <= 21 && hand.some(card => card.rank === 'A')) {
+                text += " (Soft)";
+            }
+            return text;
+        }
+
+        function displayCards(hand, element, hideFirst = false) {
+            element.innerHTML = '';
+            hand.forEach((card, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+                if ((index === 0 && hideFirst) && !gameActive) { // Hide dealer's first card until player stands
+                    cardDiv.classList.add('hidden');
+                    cardDiv.innerHTML = ''; // Clear content for hidden card
+                } else {
+                    cardDiv.innerHTML = `<div class="rank">${card.rank}</div><div class="suit">${card.suit}</div>`;
+                    if (card.suit === '♥' || card.suit === '♦') {
+                        cardDiv.classList.add('red');
+                    }
+                }
+                element.appendChild(cardDiv);
+            });
+        }
+
+        function updateDisplay() {
+            // Player hand
+            if (playerHands.length > 0) {
+                const currentHand = playerHands[currentHandIndex];
+                displayCards(currentHand.cards, playerCardsDiv);
+                playerScoreDiv.textContent = `Score: ${getHandScoreText(currentHand.cards)}`;
+                if (playerHands.length > 1) {
+                    playerScoreDiv.textContent += ` (Hand ${currentHandIndex + 1}/${playerHands.length})`;
+                }
+            } else {
+                playerCardsDiv.innerHTML = '';
+                playerScoreDiv.textContent = '';
+            }
+
+            // Dealer hand
+            displayCards(dealerHand, dealerCardsDiv, gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood);
+            dealerScoreDiv.textContent = `Score: ${gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood ? '?' : getHandScoreText(dealerHand)}`;
+            if (gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood) {
+                // If dealer has an ace face up, and it's not a natural 21, show hint for insurance
+                if (dealerHand[0].rank === 'A' && calculateHandValue(dealerHand) !== 21) {
+                    messageDiv.textContent = "Dealer shows an Ace. Insurance?";
+                } else if (dealerHand[0].value === 10 && calculateHandValue(dealerHand) !== 21) {
+                    messageDiv.textContent = "Dealer shows a 10-value card.";
+                } else {
+                    messageDiv.textContent = "Your turn.";
+                }
+            }
+
+
+            // Button States
+            const currentHand = playerHands[currentHandIndex];
+            const hasInitialTwoCards = currentHand && currentHand.cards.length === 2 && !currentHand.splitFromPair;
+            const isPlayerTurn = gameActive && !currentHand.busted && !currentHand.stood;
+
+            hitButton.disabled = !isPlayerTurn;
+            standButton.disabled = !isPlayerTurn;
+            doubleButton.disabled = !isPlayerTurn || !hasInitialTwoCards || currentHand.doubled || currentHand.splitFromPair;
+            splitButton.disabled = !isPlayerTurn || !hasInitialTwoCards || currentHand.cards[0].rank !== currentHand.cards[1].rank || playerHands.length >= 4;
+            surrenderButton.disabled = !isPlayerTurn || !canSurrender || currentHand.cards.length > 2; // Can only surrender on first two cards
+            hintButton.disabled = !gameActive;
+        }
+
+        function resetGame() {
+            gameActive = false;
+            playerHands = [];
+            dealerHand = [];
+            currentHandIndex = 0;
+            canSurrender = false;
+            isDoubleDown = false; // Reset for new game
+            messageDiv.className = 'message'; // Reset class
+            messageDiv.textContent = 'Click "New Game" to start.';
+            hintMessageDiv.textContent = '';
+            updateDisplay();
+            // Clear cards area
+            playerCardsDiv.innerHTML = '';
+            dealerCardsDiv.innerHTML = '';
+            playerScoreDiv.textContent = '';
+            dealerScoreDiv.textContent = '';
+            newGameButton.disabled = false; // Enable New Game button
+        }
+
+        async function newGame() {
+            resetGame();
+            createDeck(); // Recreate and shuffle deck for a new game
+            gameActive = true;
+            canSurrender = true; // Can surrender on the first action of the game
+
+            playerHands.push({ cards: [], busted: false, stood: false, doubled: false, splitFromPair: false });
+            dealerHand = [];
+
+            // Deal initial cards
+            playerHands[0].cards.push(dealCard());
+            dealerHand.push(dealCard());
+            playerHands[0].cards.push(dealCard());
+            dealerHand.push(dealCard());
+
+            // Check for dealer Blackjack immediately (before player actions)
+            if (calculateHandValue(dealerHand) === 21) {
+                // Unhide dealer's card and resolve
+                displayCards(dealerHand, dealerCardsDiv, false);
+                dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
+                messageDiv.textContent = "Dealer has Blackjack! You lose.";
+                gameActive = false; // End game
+                newGameButton.disabled = false;
+                disableActionButtons();
+                return;
+            }
+
+            // Check for player Blackjack
+            if (calculateHandValue(playerHands[0].cards) === 21) {
+                messageDiv.textContent = "Blackjack! You win!";
+                gameActive = false; // End game
+                newGameButton.disabled = false;
+                disableActionButtons();
+                // Reveal dealer's hand at end
+                displayCards(dealerHand, dealerCardsDiv, false);
+                dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
+                return;
+            }
+
+            updateDisplay();
+            messageDiv.textContent = "Your turn. What's your move?";
+            hintMessageDiv.textContent = '';
+        }
+
+        function disableActionButtons() {
+            hitButton.disabled = true;
+            standButton.disabled = true;
+            doubleButton.disabled = true;
+            splitButton.disabled = true;
+            surrenderButton.disabled = true;
+            hintButton.disabled = true;
+        }
+
+        async function playerHit() {
+            if (!gameActive) return;
+
+            canSurrender = false; // Can't surrender after hitting
+            const currentHand = playerHands[currentHandIndex];
+            const newCard = dealCard();
+            currentHand.cards.push(newCard);
+            updateDisplay();
+
+            const handValue = calculateHandValue(currentHand.cards);
+            if (handValue > 21) {
+                currentHand.busted = true;
+                messageDiv.textContent = `Hand ${currentHandIndex + 1} busted! Score: ${handValue}`;
+                messageDiv.classList.add('error');
+                await nextHandOrDealerTurn();
+            } else if (handValue === 21) {
+                currentHand.stood = true; // Automatically stand on 21
+                messageDiv.textContent = `Hand ${currentHandIndex + 1} is 21.`;
+                await nextHandOrDealerTurn();
+            } else {
+                checkAndHighlightMistake('H');
+            }
+            hintMessageDiv.textContent = '';
+        }
+
+        async function playerStand() {
+            if (!gameActive) return;
+
+            canSurrender = false;
+            const currentHand = playerHands[currentHandIndex];
+            currentHand.stood = true;
+            messageDiv.textContent = `Hand ${currentHandIndex + 1} stands.`;
+            checkAndHighlightMistake('S');
+            hintMessageDiv.textContent = '';
+            await nextHandOrDealerTurn();
+        }
+
+        async function playerDoubleDown() {
+            if (!gameActive) return;
+
+            canSurrender = false;
+            const currentHand = playerHands[currentHandIndex];
+            if (currentHand.cards.length !== 2) {
+                messageDiv.textContent = "Can only double down on your first two cards!";
+                messageDiv.classList.add('error');
+                return;
+            }
+
+            currentHand.doubled = true;
+            currentHand.cards.push(dealCard());
+            updateDisplay();
+
+            const handValue = calculateHandValue(currentHand.cards);
+            if (handValue > 21) {
+                currentHand.busted = true;
+                messageDiv.textContent = `Hand ${currentHandIndex + 1} doubled and busted! Score: ${handValue}`;
+                messageDiv.classList.add('error');
+            } else {
+                messageDiv.textContent = `Hand ${currentHandIndex + 1} doubled. Score: ${handValue}.`;
+            }
+            checkAndHighlightMistake('D');
+            hintMessageDiv.textContent = '';
+            currentHand.stood = true; // Automatically stand after doubling down
+            await nextHandOrDealerTurn();
+        }
+
+        async function playerSplit() {
+            if (!gameActive) return;
+
+            canSurrender = false;
+            const currentHand = playerHands[currentHandIndex];
+            if (currentHand.cards.length !== 2 || currentHand.cards[0].rank !== currentHand.cards[1].rank || playerHands.length >= 4) {
+                messageDiv.textContent = "Cannot split this hand!";
+                messageDiv.classList.add('error');
+                return;
+            }
+
+            // Remove the current hand (it will be replaced by two new ones)
+            playerHands.splice(currentHandIndex, 1);
+
+            const card1 = currentHand.cards[0];
+            const card2 = currentHand.cards[1];
+
+            const newHand1 = { cards: [card1, dealCard()], busted: false, stood: false, doubled: false, splitFromPair: true };
+            const newHand2 = { cards: [card2, dealCard()], busted: false, stood: false, doubled: false, splitFromPair: true };
+
+            // Insert new hands at the current position, then adjust index for next hand
+            playerHands.splice(currentHandIndex, 0, newHand1, newHand2);
+
+            // Special rule for Aces: can only receive one card after splitting. If 21, it's 21, not blackjack.
+            if (card1.rank === 'A') {
+                newHand1.stood = true; // Aces only get one card
+                newHand2.stood = true;
+            }
+
+            // If a hand is 21 after splitting (e.g., A+10), it's treated as a stand
+            if (calculateHandValue(newHand1.cards) === 21 && newHand1.cards.length === 2 && card1.rank !== 'A') {
+                newHand1.stood = true;
+            }
+            if (calculateHandValue(newHand2.cards) === 21 && newHand2.cards.length === 2 && card2.rank !== 'A') {
+                newHand2.stood = true;
+            }
+
+            // Recalculate which hand to play next. If we just split, play the first new hand.
+            currentHandIndex = currentHandIndex; // Stay on the first of the newly split hands
+
+            messageDiv.textContent = "Hand split!";
+            checkAndHighlightMistake('P');
+            hintMessageDiv.textContent = '';
+            updateDisplay();
+
+            // If any split hand is immediately 21 or busted, move to next
+            if (newHand1.stood || newHand1.busted) {
+                await nextHandOrDealerTurn();
+            }
+        }
+
+        async function playerSurrender() {
+            if (!gameActive || !canSurrender) return;
+
+            canSurrender = false;
+            messageDiv.textContent = "You surrendered. You lose half your bet (game over).";
+            messageDiv.classList.add('error');
+            checkAndHighlightMistake('R');
+            hintMessageDiv.textContent = '';
+            gameActive = false;
+            newGameButton.disabled = false;
+            disableActionButtons(); // Disable all actions
+            // Reveal dealer's hand at end
+            displayCards(dealerHand, dealerCardsDiv, false);
+            dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
+        }
+
+        async function nextHandOrDealerTurn() {
+            currentHandIndex++;
+            while (currentHandIndex < playerHands.length) {
+                const hand = playerHands[currentHandIndex];
+                if (!hand.busted && !hand.stood) {
+                    // It's the next hand's turn
+                    updateDisplay();
+                    messageDiv.textContent = `Now playing Hand ${currentHandIndex + 1}. What's your move?`;
+                    hintMessageDiv.textContent = '';
+                    return; // Player still has hands to play
+                }
+                currentHandIndex++; // Skip busted/stood hands
+            }
+            // All player hands are done (busted or stood), time for dealer
+            await dealerTurn();
+        }
+
+        async function dealerTurn() {
+            gameActive = false;
+            messageDiv.textContent = "Dealer's turn...";
+            updateDisplay(); // Reveal dealer's hidden card
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Pause for reveal
+
+            let dealerValue = calculateHandValue(dealerHand);
+            while (dealerValue < 17) {
+                messageDiv.textContent = `Dealer hits (score: ${dealerValue}).`;
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Pause
+                dealerHand.push(dealCard());
+                dealerValue = calculateHandValue(dealerHand);
+                updateDisplay();
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Pause before results
+
+            if (dealerValue > 21) {
+                messageDiv.textContent = `Dealer busts! (${dealerValue}). You win!`;
+                messageDiv.classList.add('message');
+            } else {
+                messageDiv.textContent = `Dealer stands on ${dealerValue}.`;
+                messageDiv.classList.add('message');
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Pause before final results
+
+            resolveGame();
+        }
+
+        function resolveGame() {
+            const dealerValue = calculateHandValue(dealerHand);
+            const dealerBusted = dealerValue > 21;
+            let allPlayerBusted = true;
+
+            playerHands.forEach((hand, index) => {
+                const playerValue = calculateHandValue(hand.cards);
+                if (hand.busted) {
+                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Busted. You lose.`;
+                } else if (dealerBusted) {
+                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Dealer busts. You win!`;
+                    allPlayerBusted = false;
+                } else if (playerValue > dealerValue) {
+                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: You win! (${playerValue} vs Dealer ${dealerValue})`;
+                    allPlayerBusted = false;
+                } else if (playerValue < dealerValue) {
+                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: You lose. (${playerValue} vs Dealer ${dealerValue})`;
+                } else {
+                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Push. (${playerValue} vs Dealer ${dealerValue})`;
+                    allPlayerBusted = false; // A push means not all busted
+                }
+            });
+
+            if (allPlayerBusted) {
+                 messageDiv.textContent = "All your hands busted. Dealer wins.";
+            }
+
+            newGameButton.disabled = false;
+            disableActionButtons(); // All actions disabled after game resolution
+        }
+
+        // --- Basic Strategy Logic (Crucial for Trainer) ---
+
+        function getOptimalPlay(playerHand, dealerUpCard, canSplit, canDouble, canSurrenderNow) {
+            const playerValue = calculateHandValue(playerHand);
+            const dealerUpCardValue = dealerUpCard.value;
+            const dealerUpCardRank = dealerUpCard.rank; // For checking A/10 vs. other values
+
+            // Determine if player hand is soft
+            const isSoft = playerHand.some(card => card.rank === 'A') && playerValue <= 21 && calculateHandValue(playerHand.filter(c => c.rank !== 'A')) + 11 === playerValue;
+
+            // Determine if player hand is a pair
+            const isPair = playerHand.length === 2 && playerHand[0].rank === playerHand[1].rank;
+
+            // --- Basic Strategy Rules ---
+
+            // Surrender (only if allowed at this specific moment)
+            if (canSurrenderNow && playerHand.length === 2) {
+                // Hard 16 vs 9, 10, A
+                if (playerValue === 16 && (dealerUpCardRank === '9' || dealerUpCardValue === 10 || dealerUpCardRank === 'A')) return 'R';
+                // Hard 15 vs 10
+                if (playerValue === 15 && dealerUpCardValue === 10) return 'R';
+            }
+
+            // Splitting
+            if (isPair && canSplit) {
+                const pairRank = playerHand[0].rank;
+                switch (pairRank) {
+                    case 'A': return 'P';
+                    case '10': case 'J': case 'Q': case 'K': return 'S'; // Never split 10s
+                    case '9': return (dealerUpCardValue >= 7 && dealerUpCardValue !== 10 && dealerUpCardRank !== 'A') ? 'S' : 'P';
+                    case '8': return 'P';
+                    case '7': return (dealerUpCardValue <= 7) ? 'P' : 'H';
+                    case '6': return (dealerUpCardValue <= 6) ? 'P' : 'H';
+                    case '5': return 'D'; // Treat as Hard 10
+                    case '4': return (dealerUpCardValue >= 5 && dealerUpCardValue <= 6) ? 'P' : 'H';
+                    case '3': return (dealerUpCardValue >= 2 && dealerUpCardValue <= 7) ? 'P' : 'H';
+                    case '2': return (dealerUpCardValue >= 2 && dealerUpCardValue <= 7) ? 'P' : 'H';
+                }
+            }
+
+            // Soft Totals
+            if (isSoft) {
+                if (playerValue >= 20) return 'S'; // Soft 20 (A,9)
+                if (playerValue === 19) return (dealerUpCardValue === 6) ? 'D' : 'S'; // Soft 19 (A,8) vs 6, otherwise S
+                if (playerValue === 18) { // Soft 18 (A,7)
+                    if (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) return 'D';
+                    if (dealerUpCardValue >= 7 && dealerUpCardValue <= 8) return 'S';
+                    return 'H'; // 9, 10, A
+                }
+                if (playerValue === 17) return (dealerUpCardValue >= 3 && dealerUpCardValue <= 6) ? 'D' : 'H'; // Soft 17 (A,6)
+                if (playerValue === 16) return (dealerUpCardValue >= 4 && dealerUpCardValue <= 6) ? 'D' : 'H'; // Soft 16 (A,5)
+                if (playerValue === 15) return (dealerUpCardValue >= 4 && dealerUpCardValue <= 6) ? 'D' : 'H'; // Soft 15 (A,4)
+                if (playerValue === 14) return (dealerUpCardValue >= 5 && dealerUpCardValue <= 6) ? 'D' : 'H'; // Soft 14 (A,3)
+                if (playerValue === 13) return (dealerUpCardValue >= 5 && dealerUpCardValue <= 6) ? 'D' : 'H'; // Soft 13 (A,2)
+                return 'H'; // Soft 12 or less should always hit if not already covered
+            }
+
+            // Hard Totals
+            if (playerValue >= 17) return 'S';
+            if (playerValue === 16) return (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H'; // 16 vs 2-6 (Stand), otherwise Hit
+            if (playerValue === 15) return (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+            if (playerValue === 14) return (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+            if (playerValue === 13) return (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+            if (playerValue === 12) return (dealerUpCardValue >= 4 && dealerUpCardValue <= 6) ? 'S' : 'H';
+            if (playerValue === 11) return 'D';
+            if (playerValue === 10) return (dealerUpCardValue >= 2 && dealerUpCardValue <= 9) ? 'D' : 'H';
+            if (playerValue === 9) return (dealerUpCardValue >= 3 && dealerUpCardValue <= 6) ? 'D' : 'H';
+            if (playerValue <= 8) return 'H';
+
+            return 'H'; // Default fallback, should theoretically not be reached if all cases are covered.
+        }
+
+        function checkAndHighlightMistake(playerAction) {
+            if (!gameActive || !playerHands[currentHandIndex]) return; // No active game or hand
+
+            const currentHand = playerHands[currentHandIndex];
+            const playerHandCards = currentHand.cards;
+            const dealerUpCard = dealerHand[0];
+
+            // If it's a doubled hand or split Aces that only got one card, player is forced to stand.
+            if (currentHand.doubled || (playerHandCards.length === 2 && playerHandCards[0].rank === 'A' && currentHand.splitFromPair)) {
+                 // No mistake check needed if forced to stand
+                 return;
+            }
+
+            // Can't surrender after the first action
+            const actualCanSurrender = (playerAction === 'R' && canSurrender && playerHandCards.length === 2);
+            const actualCanDouble = (playerAction === 'D' && playerHandCards.length === 2 && !currentHand.splitFromPair && !currentHand.doubled);
+            const actualCanSplit = (playerAction === 'P' && playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank && playerHands.length < 4);
+
+            const optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+
+            let isMistake = false;
+            let correctActionText = '';
+
+            // This logic needs to be more robust. `getOptimalPlay` returns the *best* action.
+            // We need to check if the player's action *is* the optimal action.
+            switch (optimalPlay) {
+                case 'H': correctActionText = 'Hit'; if (playerAction !== 'H') isMistake = true; break;
+                case 'S': correctActionText = 'Stand'; if (playerAction !== 'S') isMistake = true; break;
+                case 'D': correctActionText = 'Double Down'; if (playerAction !== 'D') isMistake = true; break;
+                case 'P': correctActionText = 'Split'; if (playerAction !== 'P') isMistake = true; break;
+                case 'R': correctActionText = 'Surrender'; if (playerAction !== 'R') isMistake = true; break;
+            }
+
+            // Handle cases where optimal play is D/S or R/H etc.
+            // If the optimal play is 'D' but player can't double (e.g. already hit), then optimal reverts to H.
+            // This is handled in `getOptimalPlay` by passing `canDouble` etc.
+            // However, `getOptimalPlay` assumes conditions are met. We need to check if the player *could* have made the optimal move.
+
+            // Refined check for mistakes:
+            const playerMadeAllowedMove = (playerAction === 'H' && !hitButton.disabled) ||
+                                          (playerAction === 'S' && !standButton.disabled) ||
+                                          (playerAction === 'D' && !doubleButton.disabled) ||
+                                          (playerAction === 'P' && !splitButton.disabled) ||
+                                          (playerAction === 'R' && !surrenderButton.disabled);
+
+            if (!playerMadeAllowedMove) {
+                // Player tried an invalid move (e.g., double after hitting) - this isn't a strategy mistake, but a game rule violation.
+                // The buttons are disabled, so this shouldn't happen via normal UI.
+                // This means the mistake check only applies if player made a valid but non-optimal move.
+                return;
+            }
+
+            // Re-evaluate optimal play based on actual available actions for the player.
+            let trueOptimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+
+            // Special case for Split 5s (Optimal D, if not possible H)
+            if (playerHandCards.length === 2 && playerHandCards[0].rank === '5' && trueOptimalPlay === 'D' && !actualCanDouble) {
+                trueOptimalPlay = 'H';
+            }
+             // Special case for Split 4s (Optimal P if allowed, else H)
+            if (playerHandCards.length === 2 && playerHandCards[0].rank === '4' && trueOptimalPlay === 'P' && !actualCanSplit) {
+                trueOptimalPlay = 'H';
+            }
+
+
+            // Surrender / Hit: If surrender is optimal but not chosen, next best is hit or stand.
+            if (trueOptimalPlay === 'R' && playerAction !== 'R') {
+                isMistake = true;
+                messageDiv.textContent = `Mistake! Optimal play was to Surrender.`;
+                messageDiv.classList.add('error');
+                return; // Don't check for S/H if R was best
+            }
+             // Double Down / Hit: If double is optimal but not chosen, next best is hit.
+            if (trueOptimalPlay === 'D' && playerAction !== 'D') {
+                isMistake = true;
+                messageDiv.textContent = `Mistake! Optimal play was to Double Down.`;
+                messageDiv.classList.add('error');
+                return; // Don't check for S/H if D was best
+            }
+            // Split / Hit or Stand: If split is optimal but not chosen
+            if (trueOptimalPlay === 'P' && playerAction !== 'P') {
+                 isMistake = true;
+                 messageDiv.textContent = `Mistake! Optimal play was to Split.`;
+                 messageDiv.classList.add('error');
+                 return;
+            }
+
+            // If the player's action is not the optimal play, it's a mistake
+            if (playerAction !== trueOptimalPlay) {
+                isMistake = true;
+            }
+
+            if (isMistake) {
+                messageDiv.textContent = `Mistake! You chose ${mapActionCodeToText(playerAction)}. Optimal play was to ${mapActionCodeToText(trueOptimalPlay)}.`;
+                messageDiv.classList.add('error');
+            } else {
+                messageDiv.textContent = `Correct! You chose ${mapActionCodeToText(playerAction)}.`;
+                messageDiv.classList.remove('error'); // Ensure it's not red
+                messageDiv.classList.add('message'); // Ensure it's default color
+            }
+        }
+
+        function mapActionCodeToText(code) {
+            switch (code) {
+                case 'H': return 'Hit';
+                case 'S': return 'Stand';
+                case 'D': return 'Double Down';
+                case 'P': return 'Split';
+                case 'R': return 'Surrender';
+                default: return 'Unknown';
+            }
+        }
+
+
+        function showHint() {
+            if (!gameActive || !playerHands[currentHandIndex]) {
+                hintMessageDiv.textContent = "No active game to show hint.";
+                return;
+            }
+
+            const currentHand = playerHands[currentHandIndex];
+            const playerHandCards = currentHand.cards;
+            const dealerUpCard = dealerHand[0];
+
+            const actualCanSurrender = (canSurrender && playerHandCards.length === 2);
+            const actualCanDouble = (playerHandCards.length === 2 && !currentHand.splitFromPair && !currentHand.doubled);
+            const actualCanSplit = (playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank && playerHands.length < 4);
+
+            const optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+
+            hintMessageDiv.textContent = `Hint: The optimal play is to ${mapActionCodeToText(optimalPlay)}.`;
+        }
+
+
+        // --- Event Listeners ---
+        newGameButton.addEventListener('click', newGame);
+        hitButton.addEventListener('click', playerHit);
+        standButton.addEventListener('click', playerStand);
+        doubleButton.addEventListener('click', playerDoubleDown);
+        splitButton.addEventListener('click', playerSplit);
+        surrenderButton.addEventListener('click', playerSurrender);
+        hintButton.addEventListener('click', showHint);
+
+        // Initial setup
+        resetGame();
+    </script>
+</body>
+</html>
