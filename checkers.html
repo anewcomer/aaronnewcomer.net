@@ -14,19 +14,38 @@
             background-color: #f0f0f0;
             margin: 0;
             flex-direction: column;
+            padding: 10px; /* Add some padding for small screens */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        h1 {
+            font-size: 1.8em; /* Adjust for smaller screens */
+            margin-bottom: 10px;
         }
 
         #checkersboard {
             display: grid;
-            grid-template-columns: repeat(8, 70px);
-            grid-template-rows: repeat(8, 70px);
+            grid-template-columns: repeat(8, 12.5vw); /* Use viewport width for squares */
+            grid-template-rows: repeat(8, 12.5vw); /* Use viewport width for squares to maintain aspect ratio */
             border: 2px solid #333;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            max-width: 560px; /* Max width for desktop screens */
+            max-height: 560px; /* Max height to keep it square */
+            width: 90vw; /* Make board responsive */
+            height: 90vw; /* Make board responsive */
+        }
+
+        /* Adjust square size for screens smaller than 560px (mobile-first) */
+        @media (min-width: 560px) {
+            #checkersboard {
+                grid-template-columns: repeat(8, 70px);
+                grid-template-rows: repeat(8, 70px);
+                width: 560px;
+                height: 560px;
+            }
         }
 
         .square {
-            width: 70px;
-            height: 70px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -84,15 +103,17 @@
         }
 
         #status {
-            margin-top: 20px;
-            font-size: 1.5em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.2em; /* Adjust for smaller screens */
             font-weight: bold;
+            text-align: center;
         }
 
         button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 1em;
+            margin-top: 10px;
+            padding: 8px 16px; /* Adjust padding for smaller screens */
+            font-size: 0.9em; /* Adjust font size for smaller screens */
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
@@ -105,8 +126,8 @@
         }
 
         .winner-message {
-            margin-top: 20px;
-            font-size: 2em;
+            margin-top: 15px;
+            font-size: 1.8em; /* Adjust for smaller screens */
             font-weight: bold;
             color: #4CAF50;
         }
@@ -272,8 +293,8 @@
 
             if (mandatoryJumpExists && !canPieceJump(startRow, startCol)) {
                 // If there's a mandatory jump for the player, but this piece can't do it,
-                // then this piece cannot be selected.
-                // We'll let the user re-select in handleSquareClick.
+                // then this piece cannot be selected for a non-jump move.
+                // We'll still highlight the selected piece, but no target squares.
                 return;
             }
 
@@ -281,9 +302,13 @@
                 for (let c = 0; c < 8; c++) {
                     const moveResult = isValidMove(startRow, startCol, r, c);
                     if (moveResult.valid) {
-                        const square = document.querySelector(`.square[data-row="${r}"][data-col="${c}"]`);
-                        if (square) {
-                            square.classList.add('highlight-move');
+                        // Only highlight if it's a valid move (jump or non-jump)
+                        // and if there's a mandatory jump, ensure this is a jump move.
+                        if (!mandatoryJumpExists || moveResult.jump) {
+                            const square = document.querySelector(`.square[data-row="${r}"][data-col="${c}"]`);
+                            if (square) {
+                                square.classList.add('highlight-move');
+                            }
                         }
                     }
                 }
@@ -328,8 +353,8 @@
             const absRowDiff = Math.abs(rowDiff);
             const absColDiff = Math.abs(colDiff);
 
-            const possibleJumps = checkMandatoryJumpsForPlayer(currentPlayer);
-            mandatoryJumpExists = possibleJumps.length > 0;
+            const possibleJumpsForPlayer = checkMandatoryJumpsForPlayer(currentPlayer);
+            mandatoryJumpExists = possibleJumpsForPlayer.length > 0;
 
             // Determine direction based on piece color/king status
             let validDirections = [];
@@ -379,6 +404,8 @@
                     return { valid: false };
                 }
 
+                // If a mandatory jump exists for the *current player*, this specific move must be one of those jumps.
+                // We're checking if *this piece* can jump, which is handled by the canPieceJump function.
                 return { valid: true, jump: true, jumpedRow: jumpedRow, jumpedCol: jumpedCol };
             }
 
@@ -390,7 +417,6 @@
             const piece = board[row][col];
             if (!piece) return false;
 
-            const possibleMoves = [];
             const directions = isKing(piece) ? [-1, 1] : (isRed(piece) ? [-1] : [1]);
 
             for (const rDir of directions) {
@@ -401,9 +427,11 @@
                     const targetCol = col + 2 * cDir;
 
                     if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8) {
-                        const moveResult = isValidMove(row, col, targetRow, targetCol);
-                        if (moveResult.valid && moveResult.jump) {
-                            return true;
+                        const jumpedPiece = board[jumpedRow]?.[jumpedCol]; // Optional chaining for safety
+                        const targetSquareEmpty = !board[targetRow][targetCol];
+
+                        if (jumpedPiece && getPieceColor(piece) !== getPieceColor(jumpedPiece) && targetSquareEmpty) {
+                            return true; // Found a valid jump
                         }
                     }
                 }
