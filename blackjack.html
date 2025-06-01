@@ -315,7 +315,6 @@
         let dealerHand = [];
         let gameActive = false;
         let canSurrender = false; // Only allowed on first two cards
-        let isDoubleDown = false; // Track if current hand is a doubled hand
 
         // --- DOM Elements ---
         const dealerCardsDiv = document.getElementById('dealer-cards');
@@ -402,7 +401,11 @@
             hand.forEach((card, index) => {
                 const cardDiv = document.createElement('div');
                 cardDiv.classList.add('card');
-                if ((index === 0 && hideFirst) && !gameActive) { // Hide dealer's first card until player stands
+                // Hide dealer's first card only if it's the start of the game AND game is active
+                // and player hasn't finished their turn for this hand yet.
+                const shouldBeHidden = (index === 0 && hideFirst && gameActive && !playerHands[currentHandIndex].stood && !playerHands[currentHandIndex].busted);
+
+                if (shouldBeHidden) {
                     cardDiv.classList.add('hidden');
                     cardDiv.innerHTML = ''; // Clear content for hidden card
                 } else {
@@ -430,19 +433,25 @@
             }
 
             // Dealer hand
-            displayCards(dealerHand, dealerCardsDiv, gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood);
-            dealerScoreDiv.textContent = `Score: ${gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood ? '?' : getHandScoreText(dealerHand)}`;
-            if (gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood) {
+            // Determine if dealer's first card should be hidden
+            const hideDealerFirstCard = gameActive && !playerHands.every(hand => hand.busted || hand.stood);
+            displayCards(dealerHand, dealerCardsDiv, hideDealerFirstCard);
+
+            if (hideDealerFirstCard) {
+                dealerScoreDiv.textContent = `Score: ?`;
                 // If dealer has an ace face up, and it's not a natural 21, show hint for insurance
                 if (dealerHand[0].rank === 'A' && calculateHandValue(dealerHand) !== 21) {
                     messageDiv.textContent = "Dealer shows an Ace. Insurance?";
                 } else if (dealerHand[0].value === 10 && calculateHandValue(dealerHand) !== 21) {
                     messageDiv.textContent = "Dealer shows a 10-value card.";
                 } else {
-                    messageDiv.textContent = "Your turn.";
+                    if (gameActive && !playerHands[currentHandIndex].busted && !playerHands[currentHandIndex].stood) {
+                         messageDiv.textContent = "Your turn.";
+                    }
                 }
+            } else {
+                dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
             }
-
 
             // Button States
             const currentHand = playerHands[currentHandIndex];
@@ -451,7 +460,7 @@
 
             hitButton.disabled = !isPlayerTurn;
             standButton.disabled = !isPlayerTurn;
-            doubleButton.disabled = !isPlayerTurn || !hasInitialTwoCards || currentHand.doubled || currentHand.splitFromPair;
+            doubleButton.disabled = !isPlayerTurn || !hasInitialTwoCards;
             splitButton.disabled = !isPlayerTurn || !hasInitialTwoCards || currentHand.cards[0].rank !== currentHand.cards[1].rank || playerHands.length >= 4;
             surrenderButton.disabled = !isPlayerTurn || !canSurrender || currentHand.cards.length > 2; // Can only surrender on first two cards
             hintButton.disabled = !gameActive;
@@ -463,7 +472,6 @@
             dealerHand = [];
             currentHandIndex = 0;
             canSurrender = false;
-            isDoubleDown = false; // Reset for new game
             messageDiv.className = 'message'; // Reset class
             messageDiv.textContent = 'Click "New Game" to start.';
             hintMessageDiv.textContent = '';
@@ -474,10 +482,11 @@
             playerScoreDiv.textContent = '';
             dealerScoreDiv.textContent = '';
             newGameButton.disabled = false; // Enable New Game button
+            disableActionButtons(); // Ensure all actions are disabled initially
         }
 
         async function newGame() {
-            resetGame();
+            resetGame(); // Reset to initial state
             createDeck(); // Recreate and shuffle deck for a new game
             gameActive = true;
             canSurrender = true; // Can surrender on the first action of the game
@@ -487,14 +496,16 @@
 
             // Deal initial cards
             playerHands[0].cards.push(dealCard());
-            dealerHand.push(dealCard());
+            dealerHand.push(dealCard()); // Dealer's face-up card
             playerHands[0].cards.push(dealCard());
-            dealerHand.push(dealCard());
+            dealerHand.push(dealCard()); // Dealer's face-down card
+
+            updateDisplay(); // Display initial hands (dealer's second card hidden)
 
             // Check for dealer Blackjack immediately (before player actions)
             if (calculateHandValue(dealerHand) === 21) {
-                // Unhide dealer's card and resolve
-                displayCards(dealerHand, dealerCardsDiv, false);
+                // Dealer has Blackjack, reveal their hand and end game
+                displayCards(dealerHand, dealerCardsDiv, false); // Show dealer's hand
                 dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
                 messageDiv.textContent = "Dealer has Blackjack! You lose.";
                 gameActive = false; // End game
@@ -511,13 +522,13 @@
                 disableActionButtons();
                 // Reveal dealer's hand at end
                 displayCards(dealerHand, dealerCardsDiv, false);
-                dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
+                dealerScoreDiv.textContent = `Score: ${getHandHandScoreText(dealerHand)}`;
                 return;
             }
 
-            updateDisplay();
             messageDiv.textContent = "Your turn. What's your move?";
             hintMessageDiv.textContent = '';
+            updateDisplay(); // Re-update to ensure buttons are correctly enabled/disabled
         }
 
         function disableActionButtons() {
@@ -526,7 +537,7 @@
             doubleButton.disabled = true;
             splitButton.disabled = true;
             surrenderButton.disabled = true;
-            hintButton.disabled = true;
+            hintButton.disabled = true; // Hint button also disabled when no active play
         }
 
         async function playerHit() {
@@ -563,7 +574,7 @@
             messageDiv.textContent = `Hand ${currentHandIndex + 1} stands.`;
             checkAndHighlightMistake('S');
             hintMessageDiv.textContent = '';
-            await nextHandOrDealerTurn();
+            await nextHandOrDealerTurn(); // This needs to await its completion
         }
 
         async function playerDoubleDown() {
@@ -633,8 +644,7 @@
             }
 
             // Recalculate which hand to play next. If we just split, play the first new hand.
-            currentHandIndex = currentHandIndex; // Stay on the first of the newly split hands
-
+            // currentHandIndex remains the same, pointing to the first new hand after splice
             messageDiv.textContent = "Hand split!";
             checkAndHighlightMistake('P');
             hintMessageDiv.textContent = '';
@@ -650,11 +660,11 @@
             if (!gameActive || !canSurrender) return;
 
             canSurrender = false;
-            messageDiv.textContent = "You surrendered. You lose half your bet (game over).";
+            messageDiv.textContent = "You surrendered. You lose.";
             messageDiv.classList.add('error');
             checkAndHighlightMistake('R');
             hintMessageDiv.textContent = '';
-            gameActive = false;
+            gameActive = false; // End game
             newGameButton.disabled = false;
             disableActionButtons(); // Disable all actions
             // Reveal dealer's hand at end
@@ -663,24 +673,32 @@
         }
 
         async function nextHandOrDealerTurn() {
-            currentHandIndex++;
-            while (currentHandIndex < playerHands.length) {
-                const hand = playerHands[currentHandIndex];
-                if (!hand.busted && !hand.stood) {
-                    // It's the next hand's turn
-                    updateDisplay();
-                    messageDiv.textContent = `Now playing Hand ${currentHandIndex + 1}. What's your move?`;
-                    hintMessageDiv.textContent = '';
-                    return; // Player still has hands to play
+            // Find the next active hand
+            let foundNextHand = false;
+            for (let i = currentHandIndex; i < playerHands.length; i++) {
+                if (!playerHands[i].busted && !playerHands[i].stood) {
+                    currentHandIndex = i;
+                    foundNextHand = true;
+                    break;
                 }
-                currentHandIndex++; // Skip busted/stood hands
             }
-            // All player hands are done (busted or stood), time for dealer
-            await dealerTurn();
+
+            if (foundNextHand) {
+                // It's the next hand's turn
+                updateDisplay();
+                messageDiv.textContent = `Now playing Hand ${currentHandIndex + 1}. What's your move?`;
+                hintMessageDiv.textContent = '';
+            } else {
+                // All player hands are done (busted or stood), time for dealer
+                await dealerTurn();
+            }
         }
 
         async function dealerTurn() {
-            gameActive = false;
+            gameActive = false; // Crucially set gameActive to false to disable player actions
+            disableActionButtons(); // Immediately disable player buttons
+            newGameButton.disabled = true; // Temporarily disable new game button during dealer's turn
+
             messageDiv.textContent = "Dealer's turn...";
             updateDisplay(); // Reveal dealer's hidden card
             await new Promise(resolve => setTimeout(resolve, 1000)); // Pause for reveal
@@ -697,8 +715,8 @@
             await new Promise(resolve => setTimeout(resolve, 1000)); // Pause before results
 
             if (dealerValue > 21) {
-                messageDiv.textContent = `Dealer busts! (${dealerValue}). You win!`;
-                messageDiv.classList.add('message');
+                messageDiv.textContent = `Dealer busts! (${dealerValue}).`;
+                messageDiv.classList.add('message'); // Keep default message class for positive outcomes
             } else {
                 messageDiv.textContent = `Dealer stands on ${dealerValue}.`;
                 messageDiv.classList.add('message');
@@ -711,32 +729,39 @@
         function resolveGame() {
             const dealerValue = calculateHandValue(dealerHand);
             const dealerBusted = dealerValue > 21;
+            let resultMessage = "Game Over. "; // Start with a generic message
             let allPlayerBusted = true;
 
             playerHands.forEach((hand, index) => {
                 const playerValue = calculateHandValue(hand.cards);
                 if (hand.busted) {
-                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Busted. You lose.`;
+                    resultMessage += `<br/>Hand ${index + 1}: Busted. You lose.`;
                 } else if (dealerBusted) {
-                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Dealer busts. You win!`;
+                    resultMessage += `<br/>Hand ${index + 1}: Dealer busts. You win!`;
                     allPlayerBusted = false;
                 } else if (playerValue > dealerValue) {
-                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: You win! (${playerValue} vs Dealer ${dealerValue})`;
+                    resultMessage += `<br/>Hand ${index + 1}: You win! (${playerValue} vs Dealer ${dealerValue})`;
                     allPlayerBusted = false;
                 } else if (playerValue < dealerValue) {
-                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: You lose. (${playerValue} vs Dealer ${dealerValue})`;
+                    resultMessage += `<br/>Hand ${index + 1}: You lose. (${playerValue} vs Dealer ${dealerValue})`;
                 } else {
-                    messageDiv.innerHTML += `<br/>Hand ${index + 1}: Push. (${playerValue} vs Dealer ${dealerValue})`;
+                    resultMessage += `<br/>Hand ${index + 1}: Push. (${playerValue} vs Dealer ${dealerValue})`;
                     allPlayerBusted = false; // A push means not all busted
                 }
             });
 
+            // Refine the initial message based on overall outcome
             if (allPlayerBusted) {
                  messageDiv.textContent = "All your hands busted. Dealer wins.";
+            } else if (dealerBusted) {
+                 messageDiv.textContent = "Dealer busted! You win (on remaining hands).";
+            } else {
+                messageDiv.textContent = "Round resolved. ";
             }
+            messageDiv.innerHTML = resultMessage; // Display detailed results
 
-            newGameButton.disabled = false;
-            disableActionButtons(); // All actions disabled after game resolution
+            newGameButton.disabled = false; // Enable New Game button
+            disableActionButtons(); // Ensure all actions are disabled
         }
 
         // --- Basic Strategy Logic (Crucial for Trainer) ---
@@ -772,7 +797,7 @@
                     case '8': return 'P';
                     case '7': return (dealerUpCardValue <= 7) ? 'P' : 'H';
                     case '6': return (dealerUpCardValue <= 6) ? 'P' : 'H';
-                    case '5': return 'D'; // Treat as Hard 10
+                    case '5': return 'D'; // Treat as Hard 10 (If not allowed to double, then Hit)
                     case '4': return (dealerUpCardValue >= 5 && dealerUpCardValue <= 6) ? 'P' : 'H';
                     case '3': return (dealerUpCardValue >= 2 && dealerUpCardValue <= 7) ? 'P' : 'H';
                     case '2': return (dealerUpCardValue >= 2 && dealerUpCardValue <= 7) ? 'P' : 'H';
@@ -824,87 +849,70 @@
                  return;
             }
 
-            // Can't surrender after the first action
-            const actualCanSurrender = (playerAction === 'R' && canSurrender && playerHandCards.length === 2);
-            const actualCanDouble = (playerAction === 'D' && playerHandCards.length === 2 && !currentHand.splitFromPair && !currentHand.doubled);
-            const actualCanSplit = (playerAction === 'P' && playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank && playerHands.length < 4);
+            // Determine what actions are actually available based on game state
+            const actualCanSurrender = (canSurrender && playerHandCards.length === 2);
+            const actualCanDouble = (playerHandCards.length === 2 && !currentHand.splitFromPair && !currentHand.doubled);
+            const actualCanSplit = (playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank && playerHands.length < 4);
 
-            const optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+            let optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
 
             let isMistake = false;
-            let correctActionText = '';
 
-            // This logic needs to be more robust. `getOptimalPlay` returns the *best* action.
-            // We need to check if the player's action *is* the optimal action.
-            switch (optimalPlay) {
-                case 'H': correctActionText = 'Hit'; if (playerAction !== 'H') isMistake = true; break;
-                case 'S': correctActionText = 'Stand'; if (playerAction !== 'S') isMistake = true; break;
-                case 'D': correctActionText = 'Double Down'; if (playerAction !== 'D') isMistake = true; break;
-                case 'P': correctActionText = 'Split'; if (playerAction !== 'P') isMistake = true; break;
-                case 'R': correctActionText = 'Surrender'; if (playerAction !== 'R') isMistake = true; break;
+            // Adjust optimalPlay if the 'best' action isn't actually available to the player
+            // This is crucial because getOptimalPlay always gives the theoretical best,
+            // but the player might not be able to perform it (e.g., cannot double after hitting).
+            if (optimalPlay === 'D' && !actualCanDouble) {
+                // If Double is optimal but not allowed, revert to optimal Hard strategy
+                const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                if (tempPlayerHandValue === 11) optimalPlay = 'H'; // Usually H
+                else if (tempPlayerHandValue === 10) optimalPlay = 'H'; // Usually H
+                else if (tempPlayerHandValue === 9) optimalPlay = 'H'; // Usually H
+                else if (tempPlayerHandValue >= 13 && tempPlayerHandValue <= 16 && dealerUpCardValue >= 2 && dealerUpCardValue <= 6) optimalPlay = 'S'; // For Soft hands that convert to Hard
+                else optimalPlay = 'H'; // Fallback for other cases
+            } else if (optimalPlay === 'P' && !actualCanSplit) {
+                 // If Split is optimal but not allowed, revert to optimal Hard/Soft strategy
+                 // Need to re-evaluate the hand as if it's a hard/soft total
+                 const pairRank = playerHandCards[0].rank;
+                 if (pairRank === 'A') optimalPlay = 'H'; // Cannot split Aces, hit (though this case shouldn't happen as A P is always best)
+                 else if (pairRank === '10' || pairRank === '9' || pairRank === '8' || pairRank === '7' || pairRank === '6' || pairRank === '5' || pairRank === '4' || pairRank === '3' || pairRank === '2') {
+                    // Re-evaluate based on hard or soft logic (5,5 is Hard 10; others are Hard or Soft equivalent)
+                    const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                    const tempIsSoft = playerHandCards.some(card => card.rank === 'A') && tempPlayerHandValue <= 21 && calculateHandValue(playerHandCards.filter(c => c.rank !== 'A')) + 11 === tempPlayerHandValue;
+
+                    if (pairRank === '5') { // Pair of 5s is a Hard 10
+                         optimalPlay = (dealerUpCardValue >=2 && dealerUpCardValue <=9) ? 'D' : 'H';
+                         if (!actualCanDouble) optimalPlay = 'H'; // If D not allowed, then H
+                    } else if (pairRank === '4') { // Pair of 4s
+                         optimalPlay = 'H'; // Default to hit if cannot split 4s
+                    } else if (tempIsSoft) { // Re-evaluate as soft hand
+                         // This is more complex, for simplicity, for non-split aces or other soft pairs, just hit
+                         optimalPlay = 'H'; // Could be 'D' or 'S' depending on specific rules
+                    } else { // Re-evaluate as hard hand
+                        if (tempPlayerHandValue >= 17) optimalPlay = 'S';
+                        else if (tempPlayerHandValue === 16) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                        else if (tempPlayerHandValue === 15) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                        else if (tempPlayerHandValue === 14) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                        else if (tempPlayerHandValue === 13) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                        else if (tempPlayerHandValue === 12) optimalPlay = (dealerUpCardValue >= 4 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                        else optimalPlay = 'H';
+                    }
+                 }
+            } else if (optimalPlay === 'R' && !actualCanSurrender) {
+                // If Surrender is optimal but not allowed, re-evaluate based on Hard strategy
+                const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                if (tempPlayerHandValue >= 17) optimalPlay = 'S';
+                else if (tempPlayerHandValue === 16) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                else if (tempPlayerHandValue === 15) optimalPlay = (dealerUpCardValue >= 2 && dealerUpCardValue <= 6) ? 'S' : 'H';
+                else optimalPlay = 'H';
             }
 
-            // Handle cases where optimal play is D/S or R/H etc.
-            // If the optimal play is 'D' but player can't double (e.g. already hit), then optimal reverts to H.
-            // This is handled in `getOptimalPlay` by passing `canDouble` etc.
-            // However, `getOptimalPlay` assumes conditions are met. We need to check if the player *could* have made the optimal move.
 
-            // Refined check for mistakes:
-            const playerMadeAllowedMove = (playerAction === 'H' && !hitButton.disabled) ||
-                                          (playerAction === 'S' && !standButton.disabled) ||
-                                          (playerAction === 'D' && !doubleButton.disabled) ||
-                                          (playerAction === 'P' && !splitButton.disabled) ||
-                                          (playerAction === 'R' && !surrenderButton.disabled);
-
-            if (!playerMadeAllowedMove) {
-                // Player tried an invalid move (e.g., double after hitting) - this isn't a strategy mistake, but a game rule violation.
-                // The buttons are disabled, so this shouldn't happen via normal UI.
-                // This means the mistake check only applies if player made a valid but non-optimal move.
-                return;
-            }
-
-            // Re-evaluate optimal play based on actual available actions for the player.
-            let trueOptimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
-
-            // Special case for Split 5s (Optimal D, if not possible H)
-            if (playerHandCards.length === 2 && playerHandCards[0].rank === '5' && trueOptimalPlay === 'D' && !actualCanDouble) {
-                trueOptimalPlay = 'H';
-            }
-             // Special case for Split 4s (Optimal P if allowed, else H)
-            if (playerHandCards.length === 2 && playerHandCards[0].rank === '4' && trueOptimalPlay === 'P' && !actualCanSplit) {
-                trueOptimalPlay = 'H';
-            }
-
-
-            // Surrender / Hit: If surrender is optimal but not chosen, next best is hit or stand.
-            if (trueOptimalPlay === 'R' && playerAction !== 'R') {
-                isMistake = true;
-                messageDiv.textContent = `Mistake! Optimal play was to Surrender.`;
-                messageDiv.classList.add('error');
-                return; // Don't check for S/H if R was best
-            }
-             // Double Down / Hit: If double is optimal but not chosen, next best is hit.
-            if (trueOptimalPlay === 'D' && playerAction !== 'D') {
-                isMistake = true;
-                messageDiv.textContent = `Mistake! Optimal play was to Double Down.`;
-                messageDiv.classList.add('error');
-                return; // Don't check for S/H if D was best
-            }
-            // Split / Hit or Stand: If split is optimal but not chosen
-            if (trueOptimalPlay === 'P' && playerAction !== 'P') {
-                 isMistake = true;
-                 messageDiv.textContent = `Mistake! Optimal play was to Split.`;
-                 messageDiv.classList.add('error');
-                 return;
-            }
-
-            // If the player's action is not the optimal play, it's a mistake
-            if (playerAction !== trueOptimalPlay) {
+            if (playerAction !== optimalPlay) {
                 isMistake = true;
             }
 
             if (isMistake) {
-                messageDiv.textContent = `Mistake! You chose ${mapActionCodeToText(playerAction)}. Optimal play was to ${mapActionCodeToText(trueOptimalPlay)}.`;
+                messageDiv.textContent = `Mistake! You chose ${mapActionCodeToText(playerAction)}. Optimal play was to ${mapActionCodeToText(optimalPlay)}.`;
                 messageDiv.classList.add('error');
             } else {
                 messageDiv.textContent = `Correct! You chose ${mapActionCodeToText(playerAction)}.`;
@@ -939,7 +947,41 @@
             const actualCanDouble = (playerHandCards.length === 2 && !currentHand.splitFromPair && !currentHand.doubled);
             const actualCanSplit = (playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank && playerHands.length < 4);
 
-            const optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+            let optimalPlay = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrender);
+
+            // Re-adjust hint if the optimal play isn't available
+            if (optimalPlay === 'D' && !actualCanDouble) {
+                 const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                 if (tempPlayerHandValue === 11) optimalPlay = 'H';
+                 else if (tempPlayerHandValue === 10) optimalPlay = 'H';
+                 else if (tempPlayerHandValue === 9) optimalPlay = 'H';
+                 else if (tempPlayerHandValue >= 13 && tempPlayerHandValue <= 16 && dealerUpCard.value >= 2 && dealerUpCard.value <= 6) optimalPlay = 'S';
+                 else optimalPlay = 'H';
+            } else if (optimalPlay === 'P' && !actualCanSplit) {
+                 const pairRank = playerHandCards[0].rank;
+                 if (pairRank === 'A') optimalPlay = 'H';
+                 else if (pairRank === '5') {
+                    optimalPlay = (dealerUpCard.value >=2 && dealerUpCard.value <=9) ? 'D' : 'H';
+                    if (!actualCanDouble) optimalPlay = 'H';
+                 } else if (pairRank === '4') {
+                     optimalPlay = 'H';
+                 } else { // Generic for other pairs
+                     const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                     const tempIsSoft = playerHandCards.some(card => card.rank === 'A') && tempPlayerHandValue <= 21 && calculateHandValue(playerHandCards.filter(c => c.rank !== 'A')) + 11 === tempPlayerHandValue;
+                     if (tempIsSoft) optimalPlay = 'H'; // Simplified for now
+                     else {
+                        if (tempPlayerHandValue >= 17) optimalPlay = 'S';
+                        else if (tempPlayerHandValue >= 13 && tempPlayerHandValue <= 16 && dealerUpCard.value >= 2 && dealerUpCard.value <= 6) optimalPlay = 'S';
+                        else optimalPlay = 'H';
+                     }
+                 }
+            } else if (optimalPlay === 'R' && !actualCanSurrender) {
+                const tempPlayerHandValue = calculateHandValue(playerHandCards);
+                if (tempPlayerHandValue >= 17) optimalPlay = 'S';
+                else if (tempPlayerHandValue >= 13 && tempPlayerHandValue <= 16 && dealerUpCard.value >= 2 && dealerUpCard.value <= 6) optimalPlay = 'S';
+                else optimalPlay = 'H';
+            }
+
 
             hintMessageDiv.textContent = `Hint: The optimal play is to ${mapActionCodeToText(optimalPlay)}.`;
         }
