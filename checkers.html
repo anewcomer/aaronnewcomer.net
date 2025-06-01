@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Player Checkers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        #checkersboard {
+            display: grid;
+            grid-template-columns: repeat(8, 70px);
+            grid-template-rows: repeat(8, 70px);
+            border: 2px solid #333;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .square {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em; /* For piece representation */
+            cursor: pointer;
+            user-select: none;
+            position: relative; /* For king indicator */
+        }
+
+        .light {
+            background-color: #eee; /* Unplayable squares */
+        }
+
+        .dark {
+            background-color: #555; /* Playable squares */
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            user-select: none;
+        }
+
+        .red-piece {
+            background-color: #d92b2b;
+        }
+
+        .black-piece {
+            background-color: #2b2b2b;
+        }
+
+        .king-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 0.7em;
+            color: gold;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .selected {
+            box-shadow: 0 0 0 4px yellow inset !important; /* Highlight selected square */
+        }
+
+        .highlight-move {
+            background-color: rgba(0, 255, 0, 0.3) !important; /* Highlight valid move squares */
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .winner-message {
+            margin-top: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Two-Player Checkers</h1>
+    <div id="status">Red to move</div>
+    <div id="checkersboard"></div>
+    <button onclick="resetGame()">Reset Game</button>
+
+    <script>
+        const checkersboard = document.getElementById('checkersboard');
+        const statusDisplay = document.getElementById('status');
+
+        // Initial board setup
+        // 'r' = red piece, 'b' = black piece, 'R' = red king, 'B' = black king, '' = empty
+        let board = [
+            ['', 'b', '', 'b', '', 'b', '', 'b'],
+            ['b', '', 'b', '', 'b', '', 'b', ''],
+            ['', 'b', '', 'b', '', 'b', '', 'b'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['r', '', 'r', '', 'r', '', 'r', ''],
+            ['', 'r', '', 'r', '', 'r', '', 'r'],
+            ['r', '', 'r', '', 'r', '', 'r', '']
+        ];
+
+        let selectedPiece = null; // Stores { piece, row, col } of the selected piece
+        let currentPlayer = 'red'; // 'red' or 'black'
+        let mandatoryJumpExists = false;
+        let gameOver = false;
+
+        function renderBoard() {
+            checkersboard.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    const isDarkSquare = (r + c) % 2 !== 0; // Checkers playable squares are usually dark
+                    square.classList.add(isDarkSquare ? 'dark' : 'light');
+                    square.dataset.row = r;
+                    square.dataset.col = c;
+
+                    const pieceChar = board[r][c];
+                    if (pieceChar) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.classList.add('piece');
+                        pieceElement.classList.add(isRed(pieceChar) ? 'red-piece' : 'black-piece');
+                        if (isKing(pieceChar)) {
+                            const kingIndicator = document.createElement('span');
+                            kingIndicator.classList.add('king-indicator');
+                            kingIndicator.textContent = 'K';
+                            pieceElement.appendChild(kingIndicator);
+                        }
+                        square.appendChild(pieceElement);
+                    }
+
+                    if (isDarkSquare) { // Only allow clicks on dark squares
+                        square.addEventListener('click', handleSquareClick);
+                    }
+                    checkersboard.appendChild(square);
+                }
+            }
+            updateStatus();
+            checkWinCondition();
+        }
+
+        function isRed(pieceChar) {
+            return pieceChar === 'r' || pieceChar === 'R';
+        }
+
+        function isKing(pieceChar) {
+            return pieceChar === 'R' || pieceChar === 'B';
+        }
+
+        function getPieceColor(pieceChar) {
+            return isRed(pieceChar) ? 'red' : 'black';
+        }
+
+        function updateStatus() {
+            if (gameOver) {
+                return;
+            }
+            if (mandatoryJumpExists) {
+                statusDisplay.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} to move - MANDATORY JUMP!`;
+            } else {
+                statusDisplay.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} to move`;
+            }
+        }
+
+        function handleSquareClick(event) {
+            if (gameOver) return;
+
+            const targetSquare = event.currentTarget;
+            const row = parseInt(targetSquare.dataset.row);
+            const col = parseInt(targetSquare.dataset.col);
+            const pieceAtSquare = board[row][col];
+
+            if (selectedPiece) {
+                // A piece is already selected, try to move it
+                const startRow = selectedPiece.row;
+                const startCol = selectedPiece.col;
+
+                const moveResult = isValidMove(startRow, startCol, row, col);
+
+                if (moveResult.valid) {
+                    // Perform the move
+                    board[row][col] = selectedPiece.piece;
+                    board[startRow][startCol] = '';
+
+                    if (moveResult.jump) {
+                        // Remove captured piece
+                        board[moveResult.jumpedRow][moveResult.jumpedCol] = '';
+                    }
+
+                    // Check for kinging
+                    if (isRed(board[row][col]) && row === 0) {
+                        board[row][col] = 'R'; // Red piece becomes king
+                    } else if (!isRed(board[row][col]) && row === 7) {
+                        board[row][col] = 'B'; // Black piece becomes king
+                    }
+
+                    selectedPiece = null;
+                    clearHighlights();
+                    switchPlayer();
+                    renderBoard();
+                } else {
+                    // Invalid move or trying to select another piece
+                    if (pieceAtSquare && getPieceColor(pieceAtSquare) === currentPlayer) {
+                        // Re-select if it's a new valid piece for current player
+                        selectedPiece = { piece: pieceAtSquare, row: row, col: col };
+                        highlightSelectedPiece(row, col);
+                        highlightPossibleMoves(row, col, pieceAtSquare);
+                    } else {
+                        // Deselect if clicking on empty square or opponent's piece
+                        selectedPiece = null;
+                        clearHighlights();
+                        renderBoard(); // Re-render to clear highlights
+                    }
+                }
+            } else if (pieceAtSquare && getPieceColor(pieceAtSquare) === currentPlayer) {
+                // Select a piece if it belongs to the current player
+                selectedPiece = { piece: pieceAtSquare, row: row, col: col };
+                highlightSelectedPiece(row, col);
+                highlightPossibleMoves(row, col, pieceAtSquare);
+            }
+        }
+
+        function highlightSelectedPiece(row, col) {
+            clearHighlights();
+            const square = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+            if (square) {
+                square.classList.add('selected');
+            }
+        }
+
+        function highlightPossibleMoves(startRow, startCol, pieceChar) {
+            clearHighlights(); // Clear all existing highlights first
+            highlightSelectedPiece(startRow, startCol); // Re-highlight selected piece
+
+            mandatoryJumpExists = checkMandatoryJumpsForPlayer(currentPlayer).length > 0;
+
+            if (mandatoryJumpExists && !canPieceJump(startRow, startCol)) {
+                // If there's a mandatory jump for the player, but this piece can't do it,
+                // then this piece cannot be selected.
+                // We'll let the user re-select in handleSquareClick.
+                return;
+            }
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const moveResult = isValidMove(startRow, startCol, r, c);
+                    if (moveResult.valid) {
+                        const square = document.querySelector(`.square[data-row="${r}"][data-col="${c}"]`);
+                        if (square) {
+                            square.classList.add('highlight-move');
+                        }
+                    }
+                }
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.square').forEach(square => {
+                square.classList.remove('selected', 'highlight-move');
+            });
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
+        }
+
+        function isValidMove(startRow, startCol, endRow, endCol) {
+            const piece = board[startRow][startCol];
+            const targetPiece = board[endRow][endCol];
+
+            if (!piece || getPieceColor(piece) !== currentPlayer) {
+                return { valid: false }; // Not the current player's piece
+            }
+
+            // Cannot move to the same square
+            if (startRow === endRow && startCol === endCol) {
+                return { valid: false };
+            }
+
+            // Cannot move to a non-dark square (even though click listener is on dark squares)
+            if ((endRow + endCol) % 2 === 0) {
+                return { valid: false };
+            }
+
+            // Cannot capture your own piece
+            if (targetPiece && getPieceColor(piece) === getPieceColor(targetPiece)) {
+                return { valid: false };
+            }
+
+            const rowDiff = endRow - startRow;
+            const colDiff = endCol - startCol;
+            const absRowDiff = Math.abs(rowDiff);
+            const absColDiff = Math.abs(colDiff);
+
+            const possibleJumps = checkMandatoryJumpsForPlayer(currentPlayer);
+            mandatoryJumpExists = possibleJumps.length > 0;
+
+            // Determine direction based on piece color/king status
+            let validDirections = [];
+            if (isKing(piece)) {
+                validDirections = [-1, 1]; // Kings can move/jump in all 4 diagonal directions
+            } else if (isRed(piece)) {
+                validDirections = [-1]; // Red pieces move "up" (decreasing row)
+            } else {
+                validDirections = [1]; // Black pieces move "down" (increasing row)
+            }
+
+            // Check if the move is in a valid diagonal direction
+            const isDiagonal = (absRowDiff === absColDiff);
+            const isForwardMove = validDirections.includes(Math.sign(rowDiff));
+
+            if (!isDiagonal) {
+                return { valid: false };
+            }
+
+            // Standard move (1 square)
+            if (absRowDiff === 1) {
+                if (targetPiece) { // Cannot move to a square with a piece without jumping
+                    return { valid: false };
+                }
+                if (mandatoryJumpExists) { // If a jump is available, normal moves are not allowed
+                    return { valid: false };
+                }
+                if (!isKing(piece) && !isForwardMove) { // Regular pieces cannot move backward
+                    return { valid: false };
+                }
+                return { valid: true, jump: false };
+            }
+
+            // Jump move (2 squares)
+            if (absRowDiff === 2) {
+                const jumpedRow = startRow + (rowDiff / 2);
+                const jumpedCol = startCol + (colDiff / 2);
+                const jumpedPiece = board[jumpedRow][jumpedCol];
+
+                if (!jumpedPiece || getPieceColor(piece) === getPieceColor(jumpedPiece)) {
+                    return { valid: false }; // No piece to jump over or jumping over own piece
+                }
+                if (targetPiece) {
+                    return { valid: false }; // Target square must be empty after jump
+                }
+                if (!isKing(piece) && !isForwardMove) { // Regular pieces cannot jump backward
+                    return { valid: false };
+                }
+
+                return { valid: true, jump: true, jumpedRow: jumpedRow, jumpedCol: jumpedCol };
+            }
+
+            return { valid: false };
+        }
+
+        // Checks if a specific piece can perform a jump
+        function canPieceJump(row, col) {
+            const piece = board[row][col];
+            if (!piece) return false;
+
+            const possibleMoves = [];
+            const directions = isKing(piece) ? [-1, 1] : (isRed(piece) ? [-1] : [1]);
+
+            for (const rDir of directions) {
+                for (const cDir of [-1, 1]) {
+                    const jumpedRow = row + rDir;
+                    const jumpedCol = col + cDir;
+                    const targetRow = row + 2 * rDir;
+                    const targetCol = col + 2 * cDir;
+
+                    if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8) {
+                        const moveResult = isValidMove(row, col, targetRow, targetCol);
+                        if (moveResult.valid && moveResult.jump) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Checks if any mandatory jumps exist for the current player
+        function checkMandatoryJumpsForPlayer(playerColor) {
+            const jumps = [];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = board[r][c];
+                    if (piece && getPieceColor(piece) === playerColor) {
+                        if (canPieceJump(r, c)) {
+                            jumps.push({ row: r, col: c });
+                        }
+                    }
+                }
+            }
+            return jumps;
+        }
+
+        function checkWinCondition() {
+            let redPieces = 0;
+            let blackPieces = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = board[r][c];
+                    if (piece) {
+                        if (isRed(piece)) {
+                            redPieces++;
+                        } else {
+                            blackPieces++;
+                        }
+                    }
+                }
+            }
+
+            if (redPieces === 0) {
+                statusDisplay.textContent = 'Black Wins!';
+                statusDisplay.classList.add('winner-message');
+                gameOver = true;
+            } else if (blackPieces === 0) {
+                statusDisplay.textContent = 'Red Wins!';
+                statusDisplay.classList.add('winner-message');
+                gameOver = true;
+            }
+        }
+
+        function resetGame() {
+            board = [
+                ['', 'b', '', 'b', '', 'b', '', 'b'],
+                ['b', '', 'b', '', 'b', '', 'b', ''],
+                ['', 'b', '', 'b', '', 'b', '', 'b'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['r', '', 'r', '', 'r', '', 'r', ''],
+                ['', 'r', '', 'r', '', 'r', '', 'r'],
+                ['r', '', 'r', '', 'r', '', 'r', '']
+            ];
+            selectedPiece = null;
+            currentPlayer = 'red';
+            mandatoryJumpExists = false;
+            gameOver = false;
+            statusDisplay.classList.remove('winner-message');
+            renderBoard();
+        }
+
+        // Initial render
+        renderBoard();
+    </script>
+</body>
+</html>
