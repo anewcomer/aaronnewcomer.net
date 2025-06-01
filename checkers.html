@@ -14,34 +14,35 @@
             background-color: #f0f0f0;
             margin: 0;
             flex-direction: column;
-            padding: 10px; /* Add some padding for small screens */
-            box-sizing: border-box; /* Include padding in element's total width and height */
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         h1 {
-            font-size: 1.8em; /* Adjust for smaller screens */
+            font-size: 1.8em;
             margin-bottom: 10px;
         }
 
         #checkersboard {
             display: grid;
-            grid-template-columns: repeat(8, 12.5vw); /* Use viewport width for squares */
-            grid-template-rows: repeat(8, 12.5vw); /* Use viewport width for squares to maintain aspect ratio */
+            /* On smaller screens, allow squares to be a bit smaller but set a min-width */
+            grid-template-columns: repeat(8, minmax(30px, 12.5vw)); /* min 30px, max 12.5vw */
+            grid-template-rows: repeat(8, minmax(30px, 12.5vw)); /* min 30px, max 12.5vw */
             border: 2px solid #333;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            width: 95vw; /* Use a higher percentage of viewport width for small screens */
             max-width: 560px; /* Max width for desktop screens */
-            max-height: 560px; /* Max height to keep it square */
-            width: 90vw; /* Make board responsive */
-            height: 90vw; /* Make board responsive */
+            aspect-ratio: 1 / 1; /* Maintain 1:1 aspect ratio, simpler than height: width */
+            box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
         }
 
-        /* Adjust square size for screens smaller than 560px (mobile-first) */
+        /* Adjust square size for screens wider than 560px (desktop-first approach for max-width) */
         @media (min-width: 560px) {
             #checkersboard {
                 grid-template-columns: repeat(8, 70px);
                 grid-template-rows: repeat(8, 70px);
-                width: 560px;
-                height: 560px;
+                width: 560px; /* Fixed width when screen is large enough */
+                height: 560px; /* Fixed height when screen is large enough */
             }
         }
 
@@ -53,6 +54,7 @@
             cursor: pointer;
             user-select: none;
             position: relative; /* For king indicator */
+            overflow: hidden; /* Hide overflowing content in case piece is too big */
         }
 
         .light {
@@ -64,8 +66,8 @@
         }
 
         .piece {
-            width: 80%;
-            height: 80%;
+            width: 80%; /* Adjusted to be a percentage of its parent (the square) */
+            height: 80%; /* Adjusted to be a percentage of its parent (the square) */
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -75,6 +77,9 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             cursor: grab;
             user-select: none;
+            /* Ensure piece size scales down with the square */
+            min-width: 20px; /* Minimum size for the piece */
+            min-height: 20px; /* Minimum size for the piece */
         }
 
         .red-piece {
@@ -87,11 +92,20 @@
 
         .king-indicator {
             position: absolute;
-            bottom: 5px;
-            right: 5px;
-            font-size: 0.7em;
+            bottom: 2px; /* Adjusted position for smaller squares */
+            right: 2px; /* Adjusted position for smaller squares */
+            font-size: 0.6em; /* Smaller font size for indicator on small screens */
             color: gold;
             text-shadow: 1px 1px 2px #000;
+        }
+
+        /* Adjust king indicator size for larger screens */
+        @media (min-width: 560px) {
+            .king-indicator {
+                bottom: 5px;
+                right: 5px;
+                font-size: 0.7em;
+            }
         }
 
         .selected {
