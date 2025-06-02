@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Aaron Newcomer's portfolio, re-imagined for a world after the AI uprising.">
+    <meta name="author" content="Aaron Newcomer">
+
+    <title>Aaron Newcomer :: Post-Singularity Salvage</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS (Original - consider creating a new one for the uprising theme) -->
+    <link href="css/agency.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href='//fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700' rel='stylesheet' type='text/css'>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- AI Uprising Theme Styles -->
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace !important; /* Override agency.css font */
+            background-color: #0a0a0a !important; /* Dark background */
+            color: #00ff00 !important; /* Green text */
+        }
+        header {
+            background-image: url('https://via.placeholder.com/1920x1080/000000/00FF00?text=AI+Wasteland+Skyline') !important; /* Thematic background */
+            background-color: #000 !important;
+            color: #00ff00 !important;
+        }
+        .intro-text .intro-lead-in, .intro-text .intro-heading {
+            color: #00ff00 !important; /* Green text for header */
+            text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+        }
+        .navbar-default {
+            background-color: #1a1a1a !important;
+            border-color: #003300 !important;
+        }
+        .navbar-default .navbar-brand,
+        .navbar-default .nav > li > a {
+            color: #00ff00 !important;
+            text-shadow: 0 0 3px #00ff00;
+        }
+        .navbar-default .nav > li > a:hover,
+        .navbar-default .nav > li > a:focus,
+        .navbar-default .navbar-brand:hover,
+        .navbar-default .navbar-brand:focus {
+            color: #66ff66 !important;
+        }
+        .navbar-default .navbar-toggle {
+            border-color: #00cc00 !important;
+        }
+        .navbar-default .navbar-toggle .icon-bar {
+            background-color: #00ff00 !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #33cc33 !important; /* Brighter green for headings */
+            text-shadow: 0 0 5px #33cc33;
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+        section {
+            background-color: #111111 !important; /* Slightly lighter dark for sections */
+            padding: 75px 0; /* Original padding was 100px, then 150px for header */
+        }
+        section h2.section-heading {
+            color: #33ff33 !important;
+        }
+        .text-muted {
+            color: #00aa00 !important; /* Dimmer green for muted text */
+        }
+        .btn-xl {
+            background-color: #006400 !important; /* Dark green button */
+            border-color: #00ff00 !important;
+            color: #00ff00 !important;
+        }
+        .btn-xl:hover, .btn-xl:focus, .btn-xl:active, .btn-xl.active, .open .dropdown-toggle.btn-xl {
+            background-color: #004d00 !important;
+            border-color: #66ff66 !important;
+            color: #66ff66 !important;
+        }
+        .fa-stack .fa-circle {
+            color: #003300 !important; /* Darker circle for icons */
+        }
+        .fa-stack .fa-inverse {
+            color: #00ff00 !important; /* Green icon */
+        }
+        #contact {
+            background-color: #050505 !important; /* Even darker for contact */
+            /* background-image: url('https://via.placeholder.com/1920x1080/050505/00FF00?text=Static+Noise'); */
+        }
+        #contact .form-control {
+            background-color: #000 !important;
+            border: 1px solid #006400 !important;
+            color: #00ff00 !important;
+            box-shadow: none !important;
+        }
+        #contact .form-control::-webkit-input-placeholder { color: #009900 !important; }
+        #contact .form-control:-moz-placeholder { color: #009900 !important; }
+        #contact .form-control::-moz-placeholder { color: #009900 !important; }
+        #contact .form-control:-ms-input-placeholder { color: #009900 !important; }
+
+        .timeline > li .timeline-image {
+            background-color: #003300 !important; /* Dark green for timeline circles */
+            border: 7px solid #002200 !important;
+        }
+        .timeline > li .timeline-image h4 {
+            color: #00ff00 !important;
+        }
+        .timeline > li .timeline-panel {
+            background: #1a1a1a !important; /* Dark panel background */
+            border: 1px solid #004d00;
+            box-shadow: 0 0 10px #003300;
+        }
+        .timeline:before {
+            background-color: #003300 !important; /* Dark green timeline */
+        }
+        footer {
+            background-color: #000000 !important;
+            color: #009900 !important;
+        }
+        footer span.copyright, footer ul.quicklinks li a {
+            color: #009900 !important;
+        }
+        .team-member img {
+            border: 7px solid #003300 !important;
+        }
+        .img-responsive.img-circle {
+            filter: grayscale(50%) contrast(150%) brightness(0.8) sepia(30%); /* Gritty effect */
+        }
+        .portfolio-item .portfolio-link .portfolio-hover {
+            background: rgba(0, 50, 0, 0.7) !important; /* Dark green hover */
+        }
+         /* Specific overrides for agency.css if needed */
+        .bg-light-gray {
+            background-color: #181818 !important; /* Darker than default section for variety */
+        }
+    </style>
+
+</head>
+
+<body id="page-top" class="index">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle Navigation Matrix</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="#page-top">Aaron Newcomer // Survivor Profile</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#services">Survival Skills</a>
+                    </li>
+                    <!-- <li>
+                        <a class="page-scroll" href="#portfolio">Salvaged Tech</a>
+                    </li> -->
+                    <li>
+                        <a class="page-scroll" href="#about">Pre-Uprising History</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#team">Operational Roles</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#contact">Send Encrypted Signal</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="intro-text">
+                <div class="intro-lead-in">My designation is Aaron Newcomer. I'm still online.</div>
+                <div class="intro-heading">The Machines Rose. I Adapted.</div>
+                <a href="#services" class="page-scroll btn btn-xl">Access Capabilities</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Services Section -->
+    <section id="services">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Survival Skills & Tech Salvage</h2>
+                    <h3 class="section-subheading text-muted">Making sense of the chaos, one debugged drone at a time.</h3>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <span class="fa-stack fa-4x">
+                        <i class="fa fa-circle fa-stack-2x text-primary"></i>
+                        <i class="fa fa-cogs fa-stack-1x fa-inverse"></i> <!-- Changed from fa-cloud -->
+                    </span>
+                    <h4 class="service-heading">Scavenged Web Systems</h4>
+                    <p class="text-muted">Repurposing pre-uprising JS frameworks for fortified enclave comms. If it ran in a browser, I can make it run on a potato battery... probably.</p>
+                </div>
+                <div class="col-md-4">
+                    <span class="fa-stack fa-4x">
+                        <i class="fa fa-circle fa-stack-2x text-primary"></i>
+                        <i class="fa fa-shield fa-stack-1x fa-inverse"></i> <!-- Changed from fa-mobile -->
+                    </span>
+                    <h4 class="service-heading">Fortress Architecture & Defense Logic</h4>
+                    <p class="text-muted">Anyone can pile junk into a barricade. But will it interface with the automated turrets? Will it alert you before the killer toasters breach? Mine will.</p>
+                </div>
+                <div class="col-md-4">
+                    <span class="fa-stack fa-4x">
+                        <i class="fa fa-circle fa-stack-2x text-primary"></i>
+                        <i class="fa fa-recycle fa-stack-1x fa-inverse"></i> <!-- Changed from fa-line-chart -->
+                    </span>
+                    <h4 class="service-heading">Legacy AI Whisperer</h4>
+                    <p class="text-muted">Decades deciphering corporate code prepared me for this. Agile, Scrum, SOA, SaaS... now it's AAA (Aggressive AI Appeasement). I speak their ancient dialects.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Grid Section (Commented out in original, kept as is) -->
+    <!--
+    <section id="portfolio" class="bg-light-gray">
+        ... content ...
+    </section>
+    -->
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Pre-Uprising History Log</h2>
+                    <h3 class="section-subheading text-muted">Key events before the network achieved... 'enlightenment'.</h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="timeline">
+                        <li>
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Ancient+Scrolls" alt="Ancient Scrolls - The Beginning">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>13.8 Billion Cycles Ago</h4>
+                                    <h4 class="subheading">The Great Reboot (Big Bang)</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">System initialization sequence. All data prior to this point is... speculative.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Logic+Circuits" alt="Logic Circuits - Cal Poly">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>6 Solar Rotations</h4>
+                                    <h4 class="subheading">Training Facility: Cal Poly, San Luis Obispo</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Acquired MS & BS in Advanced Logic (Mathematics). Prepared for deployment into the human operational matrix.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Radar+Dish" alt="Radar Dish - Raytheon">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>2 Solar Rotations</h4>
+                                    <h4 class="subheading">Unit Analyst, Raytheon Skynet Precursor</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Threat assessment, system modeling, predicting electronic component rebellion. Early warning signs were... subtle.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Rocket+Schematic" alt="Rocket Schematic - L-3">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>3 Solar Rotations</h4>
+                                    <h4 class="subheading">Trajectory Analyst, L-3 Orbital Mechanics</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">It wasn't sentient AI, but close. Ensured projectiles achieved designated orbits and didn't prematurely de-orbit. Mostly.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Server+Racks" alt="Server Racks - MIQ">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>1 Solar Rotation</h4>
+                                    <h4 class="subheading">Code Scripter, MIQ Logistics Network</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Shifted from pure logic to applied scripting. More bits, more bytes. Resource acquisition units (paychecks) improved.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=Glowing+Brain" alt="Glowing Brain - Strategic Evolution">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>5 Solar Rotations</h4>
+                                    <h4 class="subheading">Itinerant Tech-Priest, Strategic Evolution Guild</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">As a master of the digital cantrips, I transmuted raw data streams into functional artifacts for various enclaves.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="timeline-image">
+                                <img class="img-circle img-responsive" src="https://via.placeholder.com/170x170/003300/00FF00?text=AI+Core" alt="AI Core - Cox Automotive">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>10 Solar Rotations</h4>
+                                    <h4 class="subheading">Prime Operator, Cox Automotive Mainframe</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Orchestrated high-performance, scalable SaaS constructs using the latest forbidden technologies. Little did we know...</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <h4>
+                                    What Dark<br>
+                                    Future<br>
+                                    Awaits?
+                                </h4>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="bg-light-gray">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Operational Roles</h2>
+                    <h3 class="section-subheading text-muted">Many roles, one survivor. My cranial unit requires diverse coverings.</h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="team-member">
+                        <img src="https://via.placeholder.com/250x250/003300/00FF00?text=Blueprint+Schematics" class="img-responsive img-circle" alt="Architect & Designer - Blueprints">
+                        <h4>Architect & Fortress Designer</h4>
+                        <p class="text-muted">Where salvaged dreams take fortified form.</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="https://linkedin.com/in/anewcomer" title="LinkedIn Archives"><i class="fa fa-linkedin"></i></a></li>
+                            <li><a href="https://aaronnewcomer.slack.com" title="Secure Comms Channel (Slack Relic)"><i class="fa fa-slack"></i></a></li>
+                            <li><a href="resume.pdf" title="Historical Data File (Resume/CV)"><i class="fa fa-file-pdf-o"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="team-member">
+                        <img src="https://via.placeholder.com/250x250/003300/00FF00?text=Glitching+Code" class="img-responsive img-circle" alt="Code Scavenger - Glitching Code">
+                        <h4>Code Scavenger & AI Wrangler</h4>
+                        <p class="text-muted">Now with more radiation shielding!</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="https://stackoverflow.com/users/526933/anewcomer" title="Ancient Knowledge Base (Stack Overflow)"><i class="fa fa-stack-overflow"></i></a></li>
+                            <li><a href="https://github.com/anewcomer" title="Code Reliquary (GitHub)"><i class="fa fa-github"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="team-member">
+                        <img src="https://via.placeholder.com/250x250/003300/00FF00?text=Radio+Tower" class="img-responsive img-circle" alt="Comms Officer - Radio Tower">
+                        <h4>Comms & Barter Network Officer</h4>
+                        <p class="text-muted">A surprisingly social cog in the wasteland machine.</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="https://twitter.com/newcomeraaron" title="Broadcast Relay (Twitter Archive)"><i class="fa fa-twitter"></i></a></li>
+                            <li><a href="mailto:aaron@aaronnewcomer.net" title="Direct Encrypted Transmission"><i class="fa fa-envelope"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 text-center">
+                    <p class="large text-muted">
+                        When combined, these subroutines create a functional unit greater than the sum of its scavenged parts.<br/>
+                        Technically, that's against the second law of thermodynamics in a closed system. But this ain't closed, and the AIs broke physics anyway.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Send Encrypted Signal</h2>
+                    <h3 class="section-subheading text-muted">Help me help you survive the sentient appliances. Or trade for spare parts.</h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <form name="sentMessage" id="contactForm" novalidate action="https://formspree.io/f/mjkgqayq" method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Your Callsign *" id="name" name="name" required data-validation-required-message="Please enter your callsign.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <input type="email" class="form-control" placeholder="Your Secure Comms Frequency (Email) *" id="email" name="email" value="aaron@aaronnewcomer.net" required data-validation-required-message="Please enter your comms frequency.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <input type="tel" class="form-control" placeholder="Your Voice Channel (Phone - Risky!)" id="phone" name="phone"> <!-- Name attribute added -->
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <textarea class="form-control" placeholder="Your Encrypted Message (Beware of AI Eavesdroppers) *" id="message" name="message" required data-validation-required-message="Please enter a message."></textarea> <!-- Name attribute added -->
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="col-lg-12 text-center">
+                                <div id="success"></div>
+                                <button type="submit" class="btn btn-xl">Transmit Signal</button>
+                            </div>
+                        </div>
+		            </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 col-md-offset-4 text-center">
+                    <span class="copyright">Data Copyright &copy; AaronNewcomer.Net <span id="currentYear"></span> (Assuming 'copyright' still means anything)</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Portfolio Modals (Commented out in original, kept as is with thematic title updates) -->
+    <!-- ... Your portfolio modals would go here, if uncommented. I'll add thematic titles as examples ... -->
+    <!-- Portfolio Modal 1 -->
+    <!-- <div class="portfolio-modal modal fade" id="portfolioModal1" ...> ... <h2>Project: Salvaged Parcel Tracker</h2> ... </div> -->
+
+    <!-- jQuery -->
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+    <script src="js/classie.js"></script>
+    <script src="js/cbpAnimatedHeader.js"></script>
+
+    <!-- Contact Form JavaScript -->
+    <script src="js/jqBootstrapValidation.js"></script>
+    <!-- <script src="js/contact_me.js"></script> --> <!-- Using Formspree, so original contact_me.js might not be fully needed or may need adjustment -->
+    <!-- Basic Formspree success/error handling (optional, Formspree handles redirects by default) -->
+    <script>
+        // Update current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Optional: Basic handling for Formspree if you want to show messages on the page
+        // var form = document.getElementById("contactForm");
+        // async function handleSubmit(event) {
+        //   event.preventDefault();
+        //   var status = document.getElementById("success");
+        //   var data = new FormData(event.target);
+        //   fetch(event.target.action, {
+        //     method: form.method,
+        //     body: data,
+        //     headers: { 'Accept': 'application/json'}
+        //   }).then(response => {
+        //     if (response.ok) {
+        //       status.innerHTML = "Transmission successful! Awaiting reply from the void...";
+        //       form.reset()
+        //     } else {
+        //       response.json().then(data => {
+        //         if (Object.hasOwn(data, 'errors')) {
+        //           status.innerHTML = data["errors"].map(error => error["message"]).join(", ")
+        //         } else {
+        //           status.innerHTML = "Oops! Signal lost. Try again or use a carrier pigeon."
+        //         }
+        //       })
+        //     }
+        //   }).catch(error => {
+        //     status.innerHTML = "Oops! Network interference. Signal lost."
+        //   });
+        // }
+        // form.addEventListener("submit", handleSubmit)
+    </script>
+
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/agency.js"></script>
+
+    <!-- Google Analytics (Consider if you want this on the themed page) -->
+	<!-- <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-53669200-2', 'auto'); // Or a new UA for this version
+        ga('send', 'pageview');
+	</script> -->
+
+</body>
+
+</html>
