@@ -610,6 +610,7 @@
                             <th>Player Initial</th>
                             <th>Dealer Upcard</th>
                             <th>Player Actions &amp; (Correctness)</th>
+                            <th>Dealer Actions</th>
                             <th>Player Final</th>
                             <th>Dealer Final</th>
                             <th>Result</th>
@@ -641,6 +642,7 @@
         let playerHands = []; 
         let currentHandIndex = 0;
         let dealerHand = [];
+        let currentRoundDealerActionsLog = []; // To store dealer's actions for the current round
         let gameActive = false;
         let canSurrender = false; 
 
@@ -830,6 +832,7 @@
         function resetGame() { // Resets board for a new hand, not session
             gameActive = false;
             playerHands = [];
+            currentRoundDealerActionsLog = [];
             dealerHand = [];
             currentHandIndex = 0;
             canSurrender = false;
@@ -846,6 +849,7 @@
 
         async function newGame() {
             resetGame(); 
+            currentRoundDealerActionsLog = []; // Ensure it's reset for the new game
             createDeck(); 
             gameActive = true;
             canSurrender = true; 
@@ -879,6 +883,14 @@
                 gameActive = false; 
                 displayCards(dealerHand, dealerCardsDiv, false); 
                 dealerScoreDiv.textContent = `Score: ${getHandScoreText(dealerHand)}`;
+                // Log dealer's initial state for history if they have blackjack or game ends here
+                if (dealerHand.length === 2) {
+                    currentRoundDealerActionsLog.push({
+                        action: dealerBlackjack ? 'Blackjack' : 'Reveal',
+                        handValueBefore: calculateHandValue(dealerHand),
+                        handValueAfter: calculateHandValue(dealerHand)
+                    });
+                }
                 if (dealerBlackjack && playerBlackjack) {
                     messageDiv.textContent = "Push! Both have Blackjack.";
                     playerHands[0].stood = true; // Mark as resolved
@@ -1103,6 +1115,24 @@
 
             const allPlayerHandsResolvedEarly = playerHands.every(hand => hand.busted || hand.surrendered);
             if (allPlayerHandsResolvedEarly && playerHands.length > 0) {
+                // Log dealer's initial hand and effective "stand" if turn is skipped
+                if (dealerHand.length > 0) { // Ensure dealer has cards
+                    const initialDealerValue = calculateHandValue(dealerHand);
+                    let alreadyRevealed = currentRoundDealerActionsLog.some(log => log.action === 'Reveal' || log.action === 'Blackjack');
+                    if (!alreadyRevealed) {
+                        currentRoundDealerActionsLog.push({
+                            action: 'Reveal',
+                            handValueBefore: initialDealerValue,
+                            handValueAfter: initialDealerValue
+                        });
+                    }
+                    // Add a "Stand" action because they didn't need to play
+                    currentRoundDealerActionsLog.push({
+                        action: 'S',
+                        handValueBefore: initialDealerValue,
+                        handValueAfter: initialDealerValue
+                    });
+                }
                 messageDiv.textContent = "All player hands resolved. Dealer's turn skipped.";
                 updateDisplay(); // Reveal dealer's hand
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1115,23 +1145,51 @@
             await new Promise(resolve => setTimeout(resolve, 1000)); 
 
             let dealerValue = calculateHandValue(dealerHand);
+            // Log initial state after revealing hole card, if not already logged (e.g. by early BJ check)
+            if (!currentRoundDealerActionsLog.some(log => log.action === 'Reveal' || log.action === 'Blackjack')) {
+                currentRoundDealerActionsLog.push({
+                    action: 'Reveal',
+                    handValueBefore: dealerValue,
+                    handValueAfter: dealerValue
+                });
+            }
+
             while (dealerValue < 17 || (dealerValue === 17 && dealerHand.some(card => card.rank === 'A' && calculateHandValue(dealerHand.filter(c => c !== card)) + 11 === dealerValue))) {
                 if (dealerValue >= 21) break; 
                 messageDiv.textContent = `Dealer hits (score: ${getHandScoreText(dealerHand)}).`;
                 await new Promise(resolve => setTimeout(resolve, 1500)); 
+                
+                const handValueBeforeHit = calculateHandValue(dealerHand);
                 dealerHand.push(dealCard());
                 dealerValue = calculateHandValue(dealerHand);
+                const handValueAfterHit = dealerValue;
+                currentRoundDealerActionsLog.push({
+                    action: 'H',
+                    handValueBefore: handValueBeforeHit,
+                    handValueAfter: handValueAfterHit
+                });
                 updateDisplay();
             }
-
             await new Promise(resolve => setTimeout(resolve, 1000)); 
-
             if (dealerValue > 21) {
                 messageDiv.textContent = `Dealer busts! (${dealerValue}).`;
             } else {
                 messageDiv.textContent = `Dealer stands on ${getHandScoreText(dealerHand)}.`;
             }
             await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+            // Log final dealer action (Stand or Bust)
+            const finalDealerValue = calculateHandValue(dealerHand); // Recalculate just in case
+            if (dealerValue > 21) {
+                currentRoundDealerActionsLog.push({ action: 'Bust', handValueBefore: finalDealerValue, handValueAfter: finalDealerValue });
+            } else {
+                // Avoid duplicate Stand if last action was already a Stand due to loop condition
+                const lastDealerAction = currentRoundDealerActionsLog.length > 0 ? currentRoundDealerActionsLog[currentRoundDealerActionsLog.length -1].action : null;
+                if (lastDealerAction !== 'S' && lastDealerAction !== 'Bust') { // Only add Stand if not already busted or stood
+                    currentRoundDealerActionsLog.push({ action: 'S', handValueBefore: finalDealerValue, handValueAfter: finalDealerValue });
+                }
+            }
+
 
             resolveGame();
         }
@@ -1179,6 +1237,7 @@
                     playerInitialDisplay: formatCardsForDisplay(hand.initialCardsForThisHand),
                     dealerUpCardDisplay: dealerHand.length > 0 ? formatCardForDisplay(dealerHand[0]) : "N/A",
                     actionsSummary: formatActionsLogForDisplay(hand.actionsTakenLog),
+                    dealerActionsSummary: formatDealerActionsForDisplay(currentRoundDealerActionsLog),
                     playerFinalDisplay: `${playerValue}${hand.busted ? ' (Bust)' : ''}${hand.surrendered ? ' (Surrender)' : ''}`,
                     dealerFinalDisplay: `${dealerValue}${dealerBusted ? ' (Bust)' : ''}`,
                     result: resultOutcome,
@@ -1349,27 +1408,43 @@
         }
 
         function formatActionsLogForDisplay(actionsLogArray) {
-            if (!actionsLogArray || actionsLogArray.length === 0) return "N/A";
-            return actionsLogArray.map(log => {
+            if (!actionsLogArray || actionsLogArray.length === 0) {
+                return "N/A"; // Or specific message like "Auto-resolved"
+            }
+            let listItems = actionsLogArray.map(log => {
                 let valChange = "";
                 if (log.playerAction === 'H' || log.playerAction === 'D') {
                     valChange = ` (${log.handValueBefore}→${log.handValueAfter})`;
-                } else {
+                } else if (log.playerAction) { // For S, P, R
                     valChange = ` (${log.handValueBefore})`;
                 }
-                const correctness = log.wasCorrect ? `Correct: ${mapActionCodeToText(log.optimalAction)}` : `Mistake (Optimal: ${mapActionCodeToText(log.optimalAction)})`;
-                return `${mapActionCodeToText(log.playerAction)}${valChange}, ${correctness}`;
-            }).join('; ');
-            return actionsLogArray.map(log => {
+                const optimalActionText = log.optimalAction ? mapActionCodeToText(log.optimalAction) : "N/A";
+                const correctness = log.wasCorrect ? `Correct: ${optimalActionText}` : `Mistake (Optimal: ${optimalActionText})`;
+                return `<li>${mapActionCodeToText(log.playerAction)}${valChange}, ${correctness}</li>`;
+            }).join('');
+            return `<ol style="margin: 0; padding-left: 1.2em; text-align: left;">${listItems}</ol>`;
+        }
+
+        function formatDealerActionsForDisplay(dealerActionsLogArray) {
+            if (!dealerActionsLogArray || dealerActionsLogArray.length === 0) return "N/A";
+            let listItems = dealerActionsLogArray.map(log => {
                 let valChange = "";
-                if (log.playerAction === 'H' || log.playerAction === 'D') {
-                    valChange = ` (${log.handValueBefore}→${log.handValueAfter})`;
-                } else {
-                    valChange = ` (${log.handValueBefore})`;
+                let actionText = "";
+
+                switch(log.action) {
+                    case 'H': actionText = 'Hit'; valChange = ` (${log.handValueBefore}→${log.handValueAfter})`; break;
+                    case 'S': actionText = 'Stand'; valChange = ` (${log.handValueBefore})`; break;
+                    case 'Bust': actionText = 'Bust'; valChange = ` (${log.handValueBefore})`; break;
+                    case 'Reveal': actionText = 'Reveals Hole Card'; valChange = ` (${log.handValueBefore})`; break;
+                    case 'Blackjack': actionText = 'Blackjack!'; valChange = ` (${log.handValueBefore})`; break;
+                    default: actionText = mapActionCodeToText(log.action); valChange = ` (${log.handValueBefore})`;
                 }
-                const correctness = log.wasCorrect ? `Correct: ${mapActionCodeToText(log.optimalAction)}` : `Mistake (Optimal: ${mapActionCodeToText(log.optimalAction)})`;
-                return `${mapActionCodeToText(log.playerAction)}${valChange}, ${correctness}`;
-            }).join('<br>');
+                return `<li>${actionText}${valChange}</li>`;
+            }).join('');
+            // Using padding-left: 0 and list-style-position: inside for tighter packing if numbers are desired
+            // Or padding-left: 1.2em for more space if numbers are outside.
+            // Let's try list-style-position: inside; padding-left: 0;
+            return `<ol style="margin: 0; padding-left: 0; list-style-position: inside; text-align: left;">${listItems}</ol>`;
         }
 
         function renderHistoryTable() {
@@ -1382,6 +1457,9 @@
                 const actionsCell = row.insertCell();
                 actionsCell.innerHTML = entry.actionsSummary.replace(/Correct:/g, '<span class="action-correct">Correct:</span>')
                                                           .replace(/Mistake/g, '<span class="action-mistake">Mistake</span>');
+                
+                const dealerActionsCell = row.insertCell();
+                dealerActionsCell.innerHTML = entry.dealerActionsSummary;
 
                 row.insertCell().textContent = entry.playerFinalDisplay;
                 row.insertCell().textContent = entry.dealerFinalDisplay;
