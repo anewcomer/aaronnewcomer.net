@@ -22,7 +22,7 @@
             flex: 3; /* Takes up 3/4 of the space for game + history */
             display: flex;
             flex-direction: column;
-            gap: 20px; /* Space between game container and history log */
+            /* gap: 20px; Removed as history log is moving to a modal */
             max-width: 900px; /* Applied here for when strategy guide is side-by-side */
         }
 
@@ -175,17 +175,16 @@
         }
 
         /* History Log Container */
-        #history-log-container {
-            background-color: #1a1e24; /* Match game-container */
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            padding: 20px;
+        .modal-content #history-log-container { /* Styles for history log when inside a modal */
+            background-color: transparent; /* Modal content will provide background */
+            border-radius: 0; /* Modal content will have radius */
+            box-shadow: none; /* Modal content will have shadow */
+            padding: 0; /* Modal content will provide padding */
             color: #e0e0e0;
             font-size: 0.9em;
             text-align: left;
-            width: 100%; /* Takes full width of its parent (.main-game-area) */
-            box-sizing: border-box;
-            max-height: 400px; /* Max height for the history log */
+            width: auto;
+            max-height: 65vh; /* Max height for the history log within the modal */
             overflow-y: auto; /* Scroll if content exceeds max-height */
         }
 
@@ -253,6 +252,14 @@
         #new-session-button:hover:not(:disabled) {
             background-color: #C53030; /* Darker Red */
         }
+
+        #show-history-button {
+            background-color: #03A9F4; /* Light Blue */
+        }
+        #show-history-button:hover:not(:disabled) {
+            background-color: #0288D1; /* Darker Light Blue */
+        }
+
 
 
         /* Basic Strategy Table Container */
@@ -389,9 +396,9 @@
                 margin-bottom: 20px; 
             }
             
-            #history-log-container {
+            /* #history-log-container max-height rule removed as it's now in a modal with vh unit */
+            /* .modal-content #history-log-container {
                 max-height: 300px; /* Adjust height for stacked view */
-            }
 
             #strategy-guide-container {
                 max-height: 70vh; 
@@ -432,6 +439,48 @@
                 font-size: 0.9em;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            padding-top: 5vh; /* Location of the box */
+        }
+
+        .modal-content {
+            background-color: #1a1e24; /* Match game-container */
+            margin: auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            width: 85%;
+            max-width: 900px; /* Max width for the modal content */
+            position: relative;
+        }
+
+        .modal-close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close-button:hover,
+        .modal-close-button:focus {
+            color: #e0e0e0;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -460,41 +509,12 @@
                 <button id="split-button" class="action-button">Split</button>
                 <button id="surrender-button" class="action-button">Surrender</button>
                 <button id="new-game-button" class="action-button new-game-button">New Game</button>
+                <button id="show-history-button" class="action-button">Show History</button>
             </div>
 
             <div id="message" class="message">Click "New Game" to start.</div>
         </div>
 
-        <div id="history-log-container">
-            <h2>Game History</h2>
-            <table id="history-table">
-                <thead>
-                    <tr>
-                        <th>Player Initial</th>
-                        <th>Dealer Upcard</th>
-                        <th>Player Actions &amp; (Correctness)</th>
-                        <th>Player Final</th>
-                        <th>Dealer Final</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody id="history-table-body">
-                    <!-- History rows will be appended here by JavaScript -->
-                </tbody>
-            </table>
-            <div id="session-stats">
-                <h3>Session Statistics</h3>
-                <p>Correct Decisions: <span id="correct-moves" class="stat-value">0</span> (<span id="correct-moves-percent" class="percentage">0%</span>)</p>
-                <p>Incorrect Decisions: <span id="incorrect-moves" class="stat-value">0</span> (<span id="incorrect-moves-percent" class="percentage">0%</span>)</p>
-                <p>Total Decisions: <span id="total-decisions" class="stat-value">0</span></p>
-                <hr style="border-color: #444; margin: 10px 0;">
-                <p>Wins: <span id="wins-count" class="stat-value">0</span> (<span id="wins-percent" class="percentage">0%</span>)</p>
-                <p>Losses: <span id="losses-count" class="stat-value">0</span> (<span id="losses-percent" class="percentage">0%</span>)</p>
-                <p>Pushes: <span id="pushes-count" class="stat-value">0</span> (<span id="pushes-percent" class="percentage">0%</span>)</p>
-                <p>Total Hands Played: <span id="total-hands-played" class="stat-value">0</span></p>
-            </div>
-            <button id="new-session-button" class="action-button new-game-button">New Session</button>
-        </div>
     </div>
 
     <div id="strategy-guide-container" class="bs-table">
@@ -578,6 +598,43 @@
         </div>
     </div>
 
+    <!-- History Modal -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button">&times;</span>
+            <div id="history-log-container">
+                <h2>Game History</h2>
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Player Initial</th>
+                            <th>Dealer Upcard</th>
+                            <th>Player Actions &amp; (Correctness)</th>
+                            <th>Player Final</th>
+                            <th>Dealer Final</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- History rows will be appended here by JavaScript -->
+                    </tbody>
+                </table>
+                <div id="session-stats">
+                    <h3>Session Statistics</h3>
+                    <p>Correct Decisions: <span id="correct-moves" class="stat-value">0</span> (<span id="correct-moves-percent" class="percentage">0%</span>)</p>
+                    <p>Incorrect Decisions: <span id="incorrect-moves" class="stat-value">0</span> (<span id="incorrect-moves-percent" class="percentage">0%</span>)</p>
+                    <p>Total Decisions: <span id="total-decisions" class="stat-value">0</span></p>
+                    <hr style="border-color: #444; margin: 10px 0;">
+                    <p>Wins: <span id="wins-count" class="stat-value">0</span> (<span id="wins-percent" class="percentage">0%</span>)</p>
+                    <p>Losses: <span id="losses-count" class="stat-value">0</span> (<span id="losses-percent" class="percentage">0%</span>)</p>
+                    <p>Pushes: <span id="pushes-count" class="stat-value">0</span> (<span id="pushes-percent" class="percentage">0%</span>)</p>
+                    <p>Total Hands Played: <span id="total-hands-played" class="stat-value">0</span></p>
+                </div>
+                <button id="new-session-button" class="action-button new-game-button">New Session</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Game State Variables ---
         let deck = [];
@@ -612,6 +669,11 @@
         const splitButton = document.getElementById('split-button');
         const surrenderButton = document.getElementById('surrender-button');
         const newGameButton = document.getElementById('new-game-button');
+
+        // Modal DOM Elements
+        const historyModal = document.getElementById('history-modal');
+        const showHistoryButton = document.getElementById('show-history-button');
+        const closeHistoryModalButton = document.querySelector('#history-modal .modal-close-button');
 
         // History DOM Elements
         const historyTableBody = document.getElementById('history-table-body');
@@ -847,12 +909,12 @@
             surrenderButton.disabled = true;
         }
         
-        function recordAction(playerActionCode, handValueBefore, handValueAfter) {
+        function recordAction(playerActionCode, handCardsForDecision, handValueBefore, handValueAfter) {
             if (!gameActive || currentHandIndex >= playerHands.length || !playerHands[currentHandIndex]) return;
             const currentHand = playerHands[currentHandIndex];
             const dealerUpCard = dealerHand[0];
             
-            const mistakeInfo = checkAndHighlightMistake(playerActionCode, currentHand.cards, dealerUpCard);
+            const mistakeInfo = checkAndHighlightMistake(playerActionCode, handCardsForDecision, dealerUpCard);
 
             currentHand.actionsTakenLog.push({
                 playerAction: playerActionCode,
@@ -877,11 +939,12 @@
 
             canSurrender = false; 
             const currentHand = playerHands[currentHandIndex];
-            const handValueBefore = calculateHandValue(currentHand.cards);
+            const handCardsBeforeHit = [...currentHand.cards]; // Capture cards before hit
+            const handValueBefore = calculateHandValue(handCardsBeforeHit); // Calculate value from captured cards
             
             currentHand.cards.push(dealCard());
             const handValueAfter = calculateHandValue(currentHand.cards);
-            recordAction('H', handValueBefore, handValueAfter); // Call recordAction *after* card is dealt for H,D
+            recordAction('H', handCardsBeforeHit, handValueBefore, handValueAfter);
             updateDisplay(); 
 
             if (handValueAfter > 21) {
@@ -901,7 +964,7 @@
             canSurrender = false;
             const currentHand = playerHands[currentHandIndex];
             const handValue = calculateHandValue(currentHand.cards);
-            recordAction('S', handValue, handValue); // handValue doesn't change
+            recordAction('S', currentHand.cards, handValue, handValue);
             currentHand.stood = true;
             updateDisplay();
             await nextHandOrDealerTurn(); 
@@ -918,11 +981,12 @@
             }
             canSurrender = false;
             
-            const handValueBefore = calculateHandValue(currentHand.cards);
+            const handCardsBeforeDouble = [...currentHand.cards]; // Capture cards before double
+            const handValueBefore = calculateHandValue(handCardsBeforeDouble); // Calculate value from captured cards
             currentHand.doubled = true;
             currentHand.cards.push(dealCard());
             const handValueAfter = calculateHandValue(currentHand.cards);
-            recordAction('D', handValueBefore, handValueAfter);
+            recordAction('D', handCardsBeforeDouble, handValueBefore, handValueAfter);
             updateDisplay();
 
             if (handValueAfter > 21) {
@@ -943,7 +1007,7 @@
             }
             canSurrender = false;
             const handValueBeforeSplit = calculateHandValue(currentHand.cards);
-            recordAction('P', handValueBeforeSplit, handValueBeforeSplit); // Record split decision
+            recordAction('P', currentHand.cards, handValueBeforeSplit, handValueBeforeSplit); // Record split decision
 
             const card1 = currentHand.cards[0];
             const card2 = currentHand.cards[1];
@@ -993,7 +1057,7 @@
             
             const currentHand = playerHands[currentHandIndex];
             const handValue = calculateHandValue(currentHand.cards);
-            recordAction('R', handValue, handValue); 
+            recordAction('R', currentHand.cards, handValue, handValue); 
             currentHand.surrendered = true;
             currentHand.stood = true; 
             canSurrender = false;
@@ -1226,18 +1290,26 @@
                 return { optimalMoveForLog: playerAction, isMistake: false }; // No check if not relevant
             }
 
-            const currentFullHand = playerHands[currentHandIndex];
-            if (currentFullHand.stood || currentFullHand.busted) { // Already resolved (e.g. split aces)
+            const currentHandObject = playerHands[currentHandIndex]; // Used for hand properties like .stood, .busted, .splitFromPair
+            if (currentHandObject.stood || currentHandObject.busted) { // Already resolved (e.g. split aces)
                  return { optimalMoveForLog: playerAction, isMistake: false };
             }
 
             // For DAS strategy, doubling is allowed on any 2-card hand, even after a split.
-            const actualCanDouble = currentFullHand.cards.length === 2;
-            const actualCanSplit = actualCanDouble && currentFullHand.cards[0] && currentFullHand.cards[1] && currentFullHand.cards[0].rank === currentFullHand.cards[1].rank && playerHands.length < 4;
-            const actualCanSurrenderGlobal = canSurrender && currentFullHand.cards.length === 2 && !currentFullHand.splitFromPair;
+            // These capabilities must be determined based on playerHandCards (the hand state at the moment of decision)
+            const actualCanDouble = playerHandCards.length === 2;
 
+            const actualCanSplit = actualCanDouble && // relies on playerHandCards.length
+                                   playerHandCards[0] && playerHandCards[1] && // Ensure cards exist before accessing rank
+                                   playerHandCards[0].rank === playerHandCards[1].rank &&
+                                   playerHands.length < 4; // playerHands.length is about total number of split hands
+
+            const actualCanSurrenderGlobal = canSurrender && // global game state flag
+                                             playerHandCards.length === 2 &&
+                                             !currentHandObject.splitFromPair; // .splitFromPair is a characteristic of the hand object
+
+            // playerHandCards (the second argument to this function) is the state of the hand at decision time.
             const optimalSingleMove = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrenderGlobal);
-            
             const isMistake = (playerAction !== optimalSingleMove);
             const chosenActionText = mapActionCodeToText(playerAction);
             const optimalActionText = mapActionCodeToText(optimalSingleMove);
@@ -1288,6 +1360,16 @@
                 const correctness = log.wasCorrect ? `Correct: ${mapActionCodeToText(log.optimalAction)}` : `Mistake (Optimal: ${mapActionCodeToText(log.optimalAction)})`;
                 return `${mapActionCodeToText(log.playerAction)}${valChange}, ${correctness}`;
             }).join('; ');
+            return actionsLogArray.map(log => {
+                let valChange = "";
+                if (log.playerAction === 'H' || log.playerAction === 'D') {
+                    valChange = ` (${log.handValueBefore}→${log.handValueAfter})`;
+                } else {
+                    valChange = ` (${log.handValueBefore})`;
+                }
+                const correctness = log.wasCorrect ? `Correct: ${mapActionCodeToText(log.optimalAction)}` : `Mistake (Optimal: ${mapActionCodeToText(log.optimalAction)})`;
+                return `${mapActionCodeToText(log.playerAction)}${valChange}, ${correctness}`;
+            }).join('<br>');
         }
 
         function renderHistoryTable() {
@@ -1363,6 +1445,22 @@
         splitButton.addEventListener('click', playerSplit);
         surrenderButton.addEventListener('click', playerSurrender);
         newSessionButton.addEventListener('click', startNewSession);
+        showHistoryButton.addEventListener('click', () => {
+            historyModal.style.display = 'block';
+            // Ensure the history log container within the modal scrolls to the top
+            const historyLogContainer = document.getElementById('history-log-container');
+            if (historyLogContainer) {
+                historyLogContainer.scrollTop = 0;
+            }
+        });
+        closeHistoryModalButton.addEventListener('click', () => {
+            historyModal.style.display = 'none';
+        });
+        window.addEventListener('click', (event) => {
+            if (event.target === historyModal) {
+                historyModal.style.display = 'none';
+            }
+        });
 
         // Initial setup
         resetGame();
