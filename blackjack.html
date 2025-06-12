@@ -1231,8 +1231,9 @@
                  return { optimalMoveForLog: playerAction, isMistake: false };
             }
 
-            const actualCanDouble = currentFullHand.cards.length === 2 && !currentFullHand.splitFromPair;
-            const actualCanSplit = actualCanDouble && currentFullHand.cards[0].rank === currentFullHand.cards[1].rank && playerHands.length < 4;
+            // For DAS strategy, doubling is allowed on any 2-card hand, even after a split.
+            const actualCanDouble = currentFullHand.cards.length === 2;
+            const actualCanSplit = actualCanDouble && currentFullHand.cards[0] && currentFullHand.cards[1] && currentFullHand.cards[0].rank === currentFullHand.cards[1].rank && playerHands.length < 4;
             const actualCanSurrenderGlobal = canSurrender && currentFullHand.cards.length === 2 && !currentFullHand.splitFromPair;
 
             const optimalSingleMove = getOptimalPlay(playerHandCards, dealerUpCard, actualCanSplit, actualCanDouble, actualCanSurrenderGlobal);
