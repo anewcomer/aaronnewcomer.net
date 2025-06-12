@@ -380,6 +380,11 @@
             font-weight: bold;
         }
 
+        .bs-table td.bs-highlight {
+            outline: 3px solid yellow;
+            outline-offset: -2px; /* Adjusts outline to be slightly inside the cell border */
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.7); /* Optional: adds a subtle glow */
+        }
 
         @media (max-width: 1200px) { 
             body {
@@ -847,7 +852,16 @@
             updateDisplay(); 
         }
 
+        function clearStrategyHighlights() {
+            document.querySelectorAll('#strategy-guide-container td').forEach(td => {
+                td.classList.remove('bs-highlight');
+            });
+        }
+
+
         async function newGame() {
+            newGameButton.disabled = true; // Disable button at the very start
+
             resetGame(); 
             currentRoundDealerActionsLog = []; // Ensure it's reset for the new game
             createDeck(); 
@@ -904,12 +918,16 @@
                     playerHands[0].stood = true; // Mark as resolved
                     resolveGame(); // Log this outcome
                 }
-                newGameButton.disabled = false;
+                // resolveGame() will re-enable the newGameButton, so no need to do it here.
                 disableActionButtons();
                 return;
             }
 
             messageDiv.textContent = "Your turn. What's your move?";
+            // If we reach here, it means the game didn't auto-resolve. It's player's turn.
+            // The newGameButton was enabled by resetGame(), but we disabled it at the start of newGame.
+            // We should re-enable it now that the setup for the player's turn is complete.
+            newGameButton.disabled = false; 
             updateDisplay(); 
         }
 
@@ -918,13 +936,17 @@
             standButton.disabled = true;
             doubleButton.disabled = true;
             splitButton.disabled = true;
+            splitButton.disabled = true;
             surrenderButton.disabled = true;
         }
         
         function recordAction(playerActionCode, handCardsForDecision, handValueBefore, handValueAfter) {
             if (!gameActive || currentHandIndex >= playerHands.length || !playerHands[currentHandIndex]) return;
             const currentHand = playerHands[currentHandIndex];
-            const dealerUpCard = dealerHand[0];
+            // The dealer's upcard is the second card dealt to them, which is visible to the player.
+            // dealerHand[0] is the hole card.
+            const dealerUpCard = dealerHand.length > 1 ? dealerHand[1] : null; 
+            if (!dealerUpCard) return; // Should not happen in normal play after deal
             
             const mistakeInfo = checkAndHighlightMistake(playerActionCode, handCardsForDecision, dealerUpCard);
 
@@ -1255,6 +1277,7 @@
             newGameButton.disabled = false; 
             disableActionButtons(); 
             updateDisplay(); 
+            // clearStrategyHighlights(); // updateDisplay() should handle this now
         }
 
         // --- Basic Strategy Logic (H17, DAS) ---
@@ -1396,6 +1419,108 @@
             }
         }
 
+        function setActiveBsTab(tabIdToShow) {
+            // Use existing tabButtons and tabContents which are globally scoped in the script
+            document.querySelectorAll('#strategy-guide-container .tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#strategy-guide-container .tab-content').forEach(content => content.classList.remove('active'));
+
+            const buttonToShow = document.querySelector(`#strategy-guide-container .tab-button[data-tab="${tabIdToShow}"]`);
+            const contentToShow = document.getElementById(tabIdToShow + '-tab');
+
+            if (buttonToShow) buttonToShow.classList.add('active');
+            if (contentToShow) contentToShow.classList.add('active');
+        }
+
+        function updateStrategyHighlight() {
+            clearStrategyHighlights();
+
+            if (!gameActive || currentHandIndex >= playerHands.length || !playerHands[currentHandIndex] ||
+                playerHands[currentHandIndex].stood || playerHands[currentHandIndex].busted || playerHands[currentHandIndex].surrendered) {
+                return; // Not player's active turn or hand resolved
+            }
+
+            const currentHand = playerHands[currentHandIndex];
+            const playerHandCards = currentHand.cards;
+            // The dealer's upcard is the second card dealt to them.
+            // dealerHand[0] is the hole card.
+            const dealerUpCard = dealerHand.length > 1 ? dealerHand[1] : null;
+
+
+            if (!dealerUpCard || playerHandCards.length === 0) return;
+
+            const playerValue = calculateHandValue(playerHandCards);
+            let isPlayerSoft = false;
+            const handValueForSoftCheck = playerValue; // Use the already calculated playerValue
+            if (playerHandCards.some(c => c.rank === 'A')) {
+                let valueIfAllAcesAreOne = 0;
+                let numAcesInHand = 0;
+                playerHandCards.forEach(card => {
+                    if (card.rank === 'A') { valueIfAllAcesAreOne += 1; numAcesInHand++; } 
+                    else { valueIfAllAcesAreOne += card.value; }
+                });
+                if (numAcesInHand > 0 && (valueIfAllAcesAreOne + 10) === handValueForSoftCheck && handValueForSoftCheck <= 21) {
+                    isPlayerSoft = true;
+                }
+            }
+
+            const isPlayerPair = playerHandCards.length === 2 && playerHandCards[0].rank === playerHandCards[1].rank;
+            const canSplitCurrentHandForTab = isPlayerPair && playerHands.length < 4;
+
+            let activeTabId = 'hard';
+            let rowIndexQuery = '';
+            let colIndex = -1;
+
+            const dealerRank = dealerUpCard.rank;
+            if (dealerRank === 'A') colIndex = 9;
+            else if (['K', 'Q', 'J', '10'].includes(dealerRank)) colIndex = 8;
+            else colIndex = parseInt(dealerRank) - 2;
+
+            if (isPlayerPair && canSplitCurrentHandForTab) {
+                activeTabId = 'pairs';
+                const pRank = playerHandCards[0].rank;
+                if (pRank === 'A') rowIndexQuery = 'A,A';
+                else if (['K', 'Q', 'J', '10'].includes(pRank)) rowIndexQuery = '10,10';
+                else rowIndexQuery = `${pRank},${pRank}`;
+            } else if (isPlayerSoft) {
+                activeTabId = 'soft';
+                const otherCardValue = playerValue - 11; // Assumes one Ace is 11 for soft total
+                if (playerValue >= 20) rowIndexQuery = 'A,9'; // S20 (A,9 or A,T etc.)
+                else rowIndexQuery = `A,${otherCardValue}`; // e.g. A,7 for S18, A,2 for S13
+            } else { // Hard totals
+                activeTabId = 'hard';
+                if (playerValue >= 17) rowIndexQuery = '17-21';
+                else if (playerValue <= 8 && playerValue >= 5) rowIndexQuery = '5-8';
+                else rowIndexQuery = playerValue.toString();
+            }
+
+            setActiveBsTab(activeTabId);
+            const table = document.querySelector(`#${activeTabId}-tab table`);
+            if (!table || colIndex < 0 || !rowIndexQuery) return;
+
+            let targetRow = null;
+            const rows = table.querySelectorAll('tbody tr'); // Ensure we are looking in tbody
+            for (let row of rows) {
+                const firstCellText = row.cells[0].textContent.trim();
+                // For soft totals, table has "A,9 (S20)". Match "A,9".
+                // For hard totals like "5-8", ensure exact match or appropriate range logic if needed (currently exact)
+                if (activeTabId === 'soft' && firstCellText.startsWith(rowIndexQuery)) { // e.g. "A,7 (S18)" starts with "A,7"
+                    targetRow = row; break; 
+                } else if (firstCellText === rowIndexQuery) { // Exact match for "17-21", "16", "A,A", etc.
+                    targetRow = row; break; 
+                }
+            }
+
+            if (targetRow) {
+                const actionCellIndex = colIndex + 1; // Player hand desc is cells[0], actions start from cells[1]
+                if (targetRow.cells.length > actionCellIndex && targetRow.cells[actionCellIndex]) { // Standard row with individual cells for each dealer upcard
+                    targetRow.cells[actionCellIndex].classList.add('bs-highlight');
+                } else if (targetRow.cells.length === 2 && targetRow.cells[1] && targetRow.cells[1].hasAttribute('colspan')) {
+                    // This handles rows like "17-21 S", "A,A P", "10,10 S", "8,8 P", "11 D" where one cell spans all dealer upcards
+                    targetRow.cells[1].classList.add('bs-highlight');
+                }
+            }
+        }
+
         // --- History Log and Stats Functions ---
         function formatCardForDisplay(card) {
             if (!card) return "N/A";
@@ -1494,6 +1619,7 @@
             renderHistoryTable();
             renderSessionStats();
             newGame(); // Start a fresh game on the board
+            // updateDisplay will call updateStrategyHighlight if appropriate
         }
 
 
@@ -1542,7 +1668,23 @@
 
         // Initial setup
         resetGame();
+        // Call clearStrategyHighlights explicitly in resetGame or ensure updateDisplay does it.
+        // updateDisplay is called in resetGame, which will handle clearing or setting highlights.
         renderSessionStats(); // Initialize stats display
+
+        // Modify updateDisplay to call strategy highlighting
+        const originalUpdateDisplay = updateDisplay;
+        updateDisplay = function() {
+            originalUpdateDisplay.apply(this, arguments); // Call original display logic
+            const currentHandForDisplay = (currentHandIndex < playerHands.length) ? playerHands[currentHandIndex] : null;
+            const isPlayerActiveTurn = gameActive && currentHandForDisplay && // Ensure there's a hand
+                                       currentHandForDisplay.cards && currentHandForDisplay.cards.length > 0 && // Ensure hand has cards
+                                       !currentHandForDisplay.busted &&
+                                       !currentHandForDisplay.stood &&
+                                       !currentHandForDisplay.surrendered;
+            if (isPlayerActiveTurn) { updateStrategyHighlight(); }
+            else { clearStrategyHighlights(); }
+        }
     </script>
 </body>
 </html>
