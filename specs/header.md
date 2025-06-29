@@ -6,6 +6,17 @@
 - CSS: Bootstrap, agency.css, Font Awesome, Google Fonts
 - HTML5 shims for IE8 support
 
+## Navigation
+- Brand: "Aaron Newcomer" (links to #page-top)
+- Menu items (right-aligned):
+  - Skills (#services)
+  - Portfolio (#portfolio)
+  - About (#about)
+  - Hats (#team)
+  - Contact (#contact)
+- Mobile responsive with hamburger toggle
+- Fixed-top navbar with Bootstrap styling
+
 ## Header
 - Large intro section
 - Lead-in: "My name is Aaron Newcomer."
