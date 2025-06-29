@@ -1,54 +1,163 @@
 # Portfolio Images Generation Spec
 
-This document describes the prompts and style for generating portfolio images for each project using Google Imagen 4.
+This document provides ready-to-use prompts for generating portfolio images using Google Imagen 4. Each prompt is designed to create hand-sketched style images that can be copied directly into the image generator.
 
-## General Style
-- All images should look hand-sketched, with visible pencil or ink lines and an artistic, creative feel.
-- No text or branding in the images.
-- Color palettes should match the project theme, but remain soft and inviting.
-- Each image should visually represent the core idea or technology of the project.
-- **For each portfolio item, generate two images:**
-  - A preview image (400x289) for the portfolio grid
-  - A large modal image (1200x800) for the project details
+## Image Requirements
+- Generate two sizes for each project: 400x289 (preview) and 1200x800 (modal)
+- Hand-sketched artistic style with visible pencil/ink lines
+- No text or branding in images
+- Soft, inviting color palettes
 
-## Prompts for Each Portfolio Item
+## Ready-to-Copy Prompts
 
-1. **Change Data Capture Event Publisher**
-   - Prompt: A hand-sketched, abstract illustration of real-time data flow: interconnected databases, cloud icons, and dynamic arrows, all in a blue and silver palette.
+### 1. Change Data Capture Event Publisher
 
-2. **Communication Compliance Engine**
-   - Prompt: A hand-drawn image symbolizing secure digital communication: envelopes, checkmarks, and a shield, with blue and green tones.
+**Preview (400x289):**
+```
+A hand-sketched, abstract illustration of real-time data flow with interconnected databases, cloud icons, and dynamic arrows, all in a blue and silver palette. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
 
-3. **Customer Inbox**
-   - Prompt: A hand-sketched digital inbox with message bubbles, notifications, and subtle cloud elements. Soft blues, whites, and a hint of orange.
+**Modal (1200x800):**
+```
+A hand-sketched, abstract illustration of real-time data flow with interconnected databases, cloud icons, and dynamic arrows, all in a blue and silver palette. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
 
-4. **Construction Punchlist Mobile App**
-   - Prompt: A hand-drawn mobile device with checklists, a construction helmet, and a wrench, set on a simple site background. Yellow, gray, and white.
+### 2. Communication Compliance Engine
 
-5. **Cloud-native Event Notification Platform**
-   - Prompt: A hand-sketched cloud with radiating notification icons and event lines, on a techy background. Blue, teal, and white.
+**Preview (400x289):**
+```
+A hand-drawn image symbolizing secure digital communication with envelopes, checkmarks, and a shield, with blue and green tones. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
 
-6. **Generative AI Communication Tools**
-   - Prompt: A hand-drawn, creative image with an AI brain or neural network, chat bubbles, and digital sparkles. Purple, blue, and white.
+**Modal (1200x800):**
+```
+A hand-drawn image symbolizing secure digital communication with envelopes, checkmarks, and a shield, with blue and green tones. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
 
-7. **CI/CD Shared Component Library**
-   - Prompt: A hand-sketched image with interconnected gears, code brackets, and pipeline arrows, symbolizing automation. Blue, green, and gray.
+### 3. Customer Inbox
 
-8. **Codefall**
-   - Prompt: A hand-drawn, pixel-art inspired image of falling green code (Matrix style) on a tiny handheld game console. Black, green, and gray.
+**Preview (400x289):**
+```
+A hand-sketched digital inbox with message bubbles, notifications, and subtle cloud elements. Soft blues, whites, and a hint of orange. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
 
-9. **Blackjack Trainer**
-   - Prompt: A hand-sketched, casino-inspired image with playing cards, chips, and a digital interface. Black, red, and gold.
+**Modal (1200x800):**
+```
+A hand-sketched digital inbox with message bubbles, notifications, and subtle cloud elements. Soft blues, whites, and a hint of orange. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
 
-10. **Placeholder 1**
-    - Prompt: A hand-drawn, modern tech placeholder with abstract shapes and a soft blue-gray gradient.
+### 4. Construction Punchlist Mobile App
 
-11. **Placeholder 2**
-    - Prompt: A hand-drawn, modern tech placeholder with different abstract shapes and a soft teal-gray gradient.
+**Preview (400x289):**
+```
+A hand-drawn mobile device with checklists, a construction helmet, and a wrench, set on a simple site background. Yellow, gray, and white colors. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
 
-12. **Infrastructure Reference Library**
-    - Prompt: A hand-sketched image of digital documents, folders, and a knowledge base icon, on a techy background. Blue, white, and gray.
+**Modal (1200x800):**
+```
+A hand-drawn mobile device with checklists, a construction helmet, and a wrench, set on a simple site background. Yellow, gray, and white colors. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 5. Cloud-native Event Notification Platform
+
+**Preview (400x289):**
+```
+A hand-sketched cloud with radiating notification icons and event lines, on a techy background. Blue, teal, and white colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-sketched cloud with radiating notification icons and event lines, on a techy background. Blue, teal, and white colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 6. Generative AI Communication Tools
+
+**Preview (400x289):**
+```
+A hand-drawn, creative image with an AI brain or neural network, chat bubbles, and digital sparkles. Purple, blue, and white colors. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-drawn, creative image with an AI brain or neural network, chat bubbles, and digital sparkles. Purple, blue, and white colors. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 7. CI/CD Shared Component Library
+
+**Preview (400x289):**
+```
+A hand-sketched image with interconnected gears, code brackets, and pipeline arrows, symbolizing automation. Blue, green, and gray colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-sketched image with interconnected gears, code brackets, and pipeline arrows, symbolizing automation. Blue, green, and gray colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 8. Codefall
+
+**Preview (400x289):**
+```
+A hand-drawn, pixel-art inspired image of falling green code (Matrix style) on a tiny handheld game console. Black, green, and gray colors. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-drawn, pixel-art inspired image of falling green code (Matrix style) on a tiny handheld game console. Black, green, and gray colors. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 9. Blackjack Trainer
+
+**Preview (400x289):**
+```
+A hand-sketched, casino-inspired image with playing cards, chips, and a digital interface. Black, red, and gold colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-sketched, casino-inspired image with playing cards, chips, and a digital interface. Black, red, and gold colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 10. Placeholder 1
+
+**Preview (400x289):**
+```
+A hand-drawn, modern tech placeholder with abstract shapes and a soft blue-gray gradient. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-drawn, modern tech placeholder with abstract shapes and a soft blue-gray gradient. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 11. Placeholder 2
+
+**Preview (400x289):**
+```
+A hand-drawn, modern tech placeholder with different abstract shapes and a soft teal-gray gradient. Artistic sketch style with visible pencil lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-drawn, modern tech placeholder with different abstract shapes and a soft teal-gray gradient. Artistic sketch style with visible pencil lines. No text or branding. 1200x800 aspect ratio.
+```
+
+### 12. Infrastructure Reference Library
+
+**Preview (400x289):**
+```
+A hand-sketched image of digital documents, folders, and a knowledge base icon, on a techy background. Blue, white, and gray colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 400x289 aspect ratio.
+```
+
+**Modal (1200x800):**
+```
+A hand-sketched image of digital documents, folders, and a knowledge base icon, on a techy background. Blue, white, and gray colors. Artistic pencil drawing style with visible sketch lines. No text or branding. 1200x800 aspect ratio.
+```
 
 ---
 
-Use these prompts with Google Imagen 4 or a similar AI image generator to create a consistent, hand-sketched visual style for your portfolio grid and modal images. Generate both a 400x289 preview and a 1200x800 modal image for each item.
+## Usage Instructions
+1. Copy the prompt text from within the code blocks
+2. Paste directly into Google Imagen 4
+3. Generate the image
+4. Save with appropriate filename (e.g., `project-name-preview.jpg` or `project-name-modal.jpg`)
